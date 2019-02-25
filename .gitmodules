@@ -1,0 +1,21 @@
+[submodule "external/bit_span"]
+	path = external/bit_span
+	url = https://github.com/tudocomp/bit_span.git
+[submodule "external/tudostats"]
+	path = external/tudostats
+	url = https://github.com/tudocomp/tudostats.git
+[submodule "external/rigtorphash"]
+	path = external/rigtorphash
+	url = https://github.com/rigtorp/HashMap
+[submodule "external/tslsparse"]
+	path = external/tslsparse
+	url = https://github.com/Tessil/sparse-map
+[submodule "external/googlesparse"]
+	path = external/googlesparse
+	url = https://github.com/sparsehash/sparsehash
+[submodule "external/smhasher"]
+	path = external/smhasher
+	url = https://github.com/aappleby/smhasher
+[submodule "external/compact_sparse_hash"]
+	path = external/compact_sparse_hash
+	url = https://github.com/tudocomp/compact_sparse_hash
