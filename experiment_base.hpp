@@ -11,7 +11,7 @@
 using namespace nlohmann;
 #include <tudocomp_stat/StatPhase.hpp>
 
-#include <tudocomp/util//compact_hash/map/typedefs.hpp>
+#include <tudocomp/util/compact_hash/map/typedefs.hpp>
 
 template<class experiment_t>
 void run_experiments(experiment_t& ex) {
@@ -21,7 +21,12 @@ void run_experiments(experiment_t& ex) {
       using key_type = typename experiment_type::key_type;
       using value_type = typename experiment_type::value_type;
 
+#ifdef STATS_DISABLED
+      std::cout << "stats disabled. " << std::endl;
+#endif
+
       tdc::StatPhase root(ex.caption());
+      ex.init(root);
 
       ex.baseline();
 #ifdef USE_BONSAI_HASH
@@ -50,7 +55,7 @@ void run_experiments(experiment_t& ex) {
 	 ex.execute("sep plain 2", filter);
       }
 
-#ifndef STATS_ENABLED
+#if defined(STATS_DISABLED) || defined(MALLOC_DISABLED)
       {
 	 separate_chaining_map<avx2_bucket<key_type>, plain_bucket<value_type>  , hash_mapping_adapter<key_type , std::hash<key_type> >, arbitrary_resize> filter;
 	 ex.execute("sep avx 2", filter);

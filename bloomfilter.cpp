@@ -1,4 +1,3 @@
-#define STATS_ENABLED 1
 #include <iostream>
 #include <fstream>
 #include <MurmurHash3.h>
@@ -6,6 +5,7 @@
 
 #include "experiment_base.hpp"
 using namespace std;
+#undef STATS_DISABLED
 
 
 template<class hashmap>
@@ -16,7 +16,7 @@ void bloomfilter_test(istream& keyword_stream, istream& query_stream, hashmap& f
 
 	size_t elements = 0;
 	{
-		tdc::StatPhase v("construction");
+		tdc::StatPhase v("insert");
 		std::string line;
 		clock_t begin = clock();
 		uint64_t arr[2];
@@ -33,7 +33,10 @@ void bloomfilter_test(istream& keyword_stream, istream& query_stream, hashmap& f
 		double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 		v.log("entries", filter.size());
 		v.log("seconds", elapsed_secs);
-		v.log("nanoseconds", (((elapsed_secs)*10e8)/elements));
+		v.log("nanoseconds", (((elapsed_secs)*1e9)/elements));
+#ifdef STATS_DISABLED
+		std::cout << "insert: " << (((elapsed_secs)*1e9)/elements) << "ns" << std::endl;
+#endif
 	}
 	{
 		tdc::StatPhase v("query");
@@ -49,7 +52,10 @@ void bloomfilter_test(istream& keyword_stream, istream& query_stream, hashmap& f
 		clock_t end = clock();
 		double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 		v.log("seconds", elapsed_secs);
-		v.log("nanoseconds", (((elapsed_secs)*10e8)/elements));
+		v.log("nanoseconds", (((elapsed_secs)*1e9)/elements));
+#ifdef STATS_DISABLED
+		std::cout << "query: " << (((elapsed_secs)*1e9)/elements) << "ns" << std::endl;
+#endif
 	}
 }
 
@@ -68,6 +74,10 @@ class BloomFilterExperiment {
       const char*const m_query_file;
 
    public:
+      void init(tdc::StatPhase& phase) const {
+	 phase.log("input file", m_keyword_file);
+	 phase.log("query file", m_query_file);
+      }
       const char* caption() const { return m_caption; }
 
       BloomFilterExperiment(const char*const caption, const char*const keyword_file, const char*const query_file) : m_caption(caption), m_keyword_file(keyword_file), m_query_file(query_file) {
@@ -75,6 +85,9 @@ class BloomFilterExperiment {
 
       template<class T>
 	 void execute(const char*const label, T& filter) {
+#ifdef STATS_DISABLED
+		std::cout << "running " << label << std::endl;
+#endif
 	    tdc::StatPhase v(label);
 	    ifstream keyword_stream(m_keyword_file);
 	    ifstream query_stream(m_query_file);
@@ -93,7 +106,6 @@ class BloomFilterExperiment {
 
 int main(int argc, char **argv) {
 	free(malloc(42));
-
 
 	if(argc < 3) {
 		std::cout << argv[0] << " [keyword-file] [query-file] " << std::endl;
@@ -115,7 +127,6 @@ int main(int argc, char **argv) {
 	}
 
 
-	// tdc::StatPhase root("construction");
 
 	BloomFilterExperiment ex("Bloomfilter", argv[1], argv[2]);
 	run_experiments(ex);

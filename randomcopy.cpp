@@ -1,5 +1,3 @@
-#define STATS_ENABLED 1
-#define USE_BONSAI_HASH 1
 #include "experiment_base.hpp"
 
 template<class T>
@@ -14,7 +12,7 @@ class CopyExperiment {
       using key_type = uint32_t;
       using value_type = uint32_t;
 
-      constexpr static size_t NUM_ELEMENTS = 2000000;
+      const size_t NUM_ELEMENTS = 2000000;
       static constexpr uint8_t KEY_BITSIZE = 32;
       static_assert(sizeof(key_type)*8 >= KEY_BITSIZE, "Num range must fit into key_type");
 
@@ -26,9 +24,13 @@ class CopyExperiment {
       const char*const m_caption;
 
    public:
+      void init(tdc::StatPhase& phase) const {
+	 phase.log("size", NUM_ELEMENTS);
+	 phase.log("key bit size", KEY_BITSIZE);
+      }
       const char* caption() const { return m_caption; }
 
-      CopyExperiment(const char*const caption) : m_caption(caption) {
+      CopyExperiment(const char*const caption, size_t num_elements) : NUM_ELEMENTS(num_elements), m_caption(caption) {
 	    for(size_t i = 0; i < NUM_ELEMENTS; ++i) {
 	       m_map[random_int(1ULL<<KEY_BITSIZE)] = i;
 	    }
@@ -38,8 +40,19 @@ class CopyExperiment {
       template<class T>
 	 void execute(const char*const label, T& filter) {
 	    tdc::StatPhase v(label);
-	    for(auto el : m_map) {
-	       filter[el.first] = el.second;
+	    {
+	       tdc::StatPhase v2("insert");
+	       for(auto el : m_map) {
+		  filter[el.first] = el.second;
+	       }
+	    }
+	    {
+	       tdc::StatPhase v2("query");
+	       for(auto el : m_map) {
+		  if(filter[el.first] != el.second) {
+		     throw std::runtime_error("Element not found!");
+		  }
+	       }
 	    }
 	    if constexpr (has_print_stats_fn<T>::value) {
 	       tdc::StatPhase finalize("finalize");
@@ -51,18 +64,39 @@ class CopyExperiment {
 	 tdc::StatPhase v("plain array");
 	 key_type* keys = new key_type[m_map.size()];
 	 value_type* values = new value_type[m_map.size()];
-	 size_t i = 0;
-	 for(auto el : m_map) {
-	    keys[i] = el.first;
-	    values[i] = el.second;
+	 {
+	    tdc::StatPhase v2("insert");
+	    size_t i = 0;
+	    for(auto el : m_map) {
+	       keys[i] = el.first;
+	       values[i] = el.second;
+	       ++i;
+	    }
+	 }
+	 {
+	    tdc::StatPhase v2("query");
+	    size_t i = 0;
+	    for(auto el : m_map) {
+	       if(keys[i] != el.first || values[i] != el.second) {
+		  std::runtime_error("key/value mismatch!");
+	       }
+	       ++i;
+	    }
 	 }
 	 delete [] keys;
 	 delete [] values;
       }
 };
 
-int main() {
-	CopyExperiment ex("Random Copy");
-	run_experiments(ex);
-	return 0;
+int main(int argc, char** argv) {
+   if(argc != 2) {
+      std::cerr << "Usage: " << argv[0] << " problem-size" << std::endl;
+      return 1;
+   }
+   const size_t num_elements = strtoul(argv[1], NULL, 10);
+
+
+   CopyExperiment ex("Random Copy", num_elements);
+   run_experiments(ex);
+   return 0;
 }
