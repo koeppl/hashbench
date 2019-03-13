@@ -8,6 +8,6 @@ while [[ $size -le 268435456 ]]; do
 		while read -r line; do
 			echo "$line size=$size"
 		done 
-	((size*=2))
+	((size=size*3/2))
 done
 rm $jsonfile
