@@ -33,17 +33,32 @@ void run_experiments(experiment_t& ex) {
       if(ex.KEY_BITSIZE < 64)
       {
          tdc::compact_hash::map::sparse_elias_hashmap_t<value_type> filter(0,ex.KEY_BITSIZE);
-         ex.execute("elias", filter);
+         ex.execute("eliasS", filter);
       }
       if(ex.KEY_BITSIZE < 64)
       {
          tdc::compact_hash::map::sparse_cv_hashmap_t<value_type> filter(0,ex.KEY_BITSIZE);
-         ex.execute("cleary", filter);
+         ex.execute("clearyS", filter);
       }
       if(ex.KEY_BITSIZE < 64)
       {
          tdc::compact_hash::map::sparse_layered_hashmap_t<value_type> filter(0,ex.KEY_BITSIZE);
-         ex.execute("layered", filter);
+         ex.execute("layeredS", filter);
+      }
+      if(ex.KEY_BITSIZE < 64)
+      {
+         tdc::compact_hash::map::plain_elias_hashmap_t<value_type> filter(0,ex.KEY_BITSIZE);
+         ex.execute("eliasP", filter);
+      }
+      if(ex.KEY_BITSIZE < 64)
+      {
+         tdc::compact_hash::map::plain_cv_hashmap_t<value_type> filter(0,ex.KEY_BITSIZE);
+         ex.execute("clearyP", filter);
+      }
+      if(ex.KEY_BITSIZE < 64)
+      {
+         tdc::compact_hash::map::plain_layered_hashmap_t<value_type> filter(0,ex.KEY_BITSIZE);
+         ex.execute("layeredP", filter);
       }
 #endif//USE_BONSAI_TABLES
       {

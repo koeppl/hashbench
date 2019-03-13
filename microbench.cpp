@@ -46,9 +46,12 @@ class Fixture {
    using compact_type   = separate_chaining_map<varwidth_bucket        , plain_bucket<value_type>  , xorshift_hash<>, incremental_resize>;
    using compact_arb_type   = separate_chaining_map<varwidth_bucket        , plain_bucket<value_type>  , xorshift_hash<>, arbitrary_resize>;
 #ifdef USE_BONSAI_TABLES
-   using elias_type     = tdc::compact_hash::map::sparse_elias_hashmap_t<value_type>;
-   using cleary_type    = tdc::compact_hash::map::sparse_cv_hashmap_t<value_type>;
-   using layered_type   =tdc::compact_hash::map::sparse_layered_hashmap_t<value_type>;
+   using eliasS_type     = tdc::compact_hash::map::sparse_elias_hashmap_t<value_type>;
+   using clearyS_type    = tdc::compact_hash::map::sparse_cv_hashmap_t<value_type>;
+   using layeredS_type   =tdc::compact_hash::map::sparse_layered_hashmap_t<value_type>;
+   using eliasP_type     = tdc::compact_hash::map::plain_elias_hashmap_t<value_type>;
+   using clearyP_type    = tdc::compact_hash::map::plain_cv_hashmap_t<value_type>;
+   using layeredP_type   =tdc::compact_hash::map::plain_layered_hashmap_t<value_type>;
 #endif//USE_BONSAI_TABLES
 
 #ifdef USE_BUCKET_TABLES
@@ -71,9 +74,12 @@ class Fixture {
    tsl_type* m_tsl = nullptr;
 
 #ifdef USE_BONSAI_TABLES
-   elias_type* m_elias = nullptr;
-   cleary_type* m_cleary = nullptr;
-   layered_type* m_layered = nullptr;
+   eliasP_type* m_eliasP = nullptr;
+   clearyP_type* m_clearyP = nullptr;
+   layeredP_type* m_layeredP = nullptr;
+   eliasS_type* m_eliasS = nullptr;
+   clearyS_type* m_clearyS = nullptr;
+   layeredS_type* m_layeredS = nullptr;
 #endif//USE_BONSAI_TABLES
 
 #ifdef USE_BUCKET_TABLES
@@ -103,9 +109,12 @@ class Fixture {
       m_tsl = new tsl_type();
 
 #ifdef USE_BONSAI_TABLES
-      m_elias = new elias_type(0,NUM_RANGE);
-      m_layered = new layered_type(0,NUM_RANGE);
-      m_cleary = new cleary_type(0,NUM_RANGE);
+      m_eliasS = new eliasS_type(0,NUM_RANGE);
+      m_layeredS = new layeredS_type(0,NUM_RANGE);
+      m_clearyS = new clearyS_type(0,NUM_RANGE);
+      m_eliasP = new eliasP_type(0,NUM_RANGE);
+      m_layeredP = new layeredP_type(0,NUM_RANGE);
+      m_clearyP = new clearyP_type(0,NUM_RANGE);
 #endif//USE_BONSAI_TABLES
 
 #ifdef USE_BUCKET_TABLES
@@ -130,9 +139,12 @@ class Fixture {
 	 (*m_tsl)[el.first] = el.second;
 
 #ifdef USE_BONSAI_TABLES
-	 (*m_cleary)[el.first] = el.second;
-	 (*m_layered)[el.first] = el.second;
-	 (*m_elias)[el.first] = el.second;
+	 (*m_clearyP)[el.first] = el.second;
+	 (*m_layeredP)[el.first] = el.second;
+	 (*m_eliasP)[el.first] = el.second;
+	 (*m_clearyS)[el.first] = el.second;
+	 (*m_layeredS)[el.first] = el.second;
+	 (*m_eliasS)[el.first] = el.second;
 #endif//USE_BONSAI_TABLES
 #ifdef USE_BUCKET_TABLES
       (*m_bucket)[el.first]      = el.second;
@@ -152,9 +164,12 @@ class Fixture {
 	 DCHECK_EQ((*m_tsl)[el.first], el.second);
 
 #ifdef USE_BONSAI_TABLES
-	 DCHECK_EQ((*m_cleary)[el.first], el.second);
-	 DCHECK_EQ((*m_elias)[el.first], el.second);
-	 DCHECK_EQ((*m_layered)[el.first], el.second);
+	 DCHECK_EQ((*m_clearyP)[el.first], el.second);
+	 DCHECK_EQ((*m_eliasP)[el.first], el.second);
+	 DCHECK_EQ((*m_layeredP)[el.first], el.second);
+	 DCHECK_EQ((*m_clearyS)[el.first], el.second);
+	 DCHECK_EQ((*m_eliasS)[el.first], el.second);
+	 DCHECK_EQ((*m_layeredS)[el.first], el.second);
 #endif//USE_BONSAI_TABLES
 #ifdef USE_BUCKET_TABLES
       DCHECK_EQ((*m_bucket)[el.first]      , el.second);
@@ -174,9 +189,12 @@ class Fixture {
       DCHECK_EQ(m_tsl->size(), m_ordered->size());
 
 #ifdef USE_BONSAI_TABLES
-      DCHECK_EQ(m_cleary->size(), m_ordered->size());
-      DCHECK_EQ(m_elias->size(), m_ordered->size());
-      DCHECK_EQ(m_layered->size(), m_ordered->size());
+      DCHECK_EQ(m_clearyP->size(), m_ordered->size());
+      DCHECK_EQ(m_eliasP->size(), m_ordered->size());
+      DCHECK_EQ(m_layeredP->size(), m_ordered->size());
+      DCHECK_EQ(m_clearyS->size(), m_ordered->size());
+      DCHECK_EQ(m_eliasS->size(), m_ordered->size());
+      DCHECK_EQ(m_layeredS->size(), m_ordered->size());
 #endif//USE_BONSAI_TABLES
 #ifdef USE_BUCKET_TABLES
       DCHECK_EQ((m_bucket)     ->size() , m_ordered->size());
@@ -191,11 +209,16 @@ class Fixture {
 	 delete m_plain;
 	 delete m_plain_arb;
 	 delete m_avx;
+	 delete m_avx_arb;
 	 delete m_compact;
+	 delete m_compact_arb;
 #ifdef USE_BONSAI_TABLES
-	 delete m_elias;
-	 delete m_layered;
-	 delete m_cleary;
+	 delete m_eliasS;
+	 delete m_layeredS;
+	 delete m_clearyS;
+	 delete m_eliasP;
+	 delete m_layeredP;
+	 delete m_clearyP;
 #endif//USE_BONSAI_TABLES
 #ifdef USE_BUCKET_TABLES
 	 delete m_bucket;
@@ -345,25 +368,46 @@ BENCHMARK_F(query, tsl, TableFixture, 0, 100)
 }
 
 #ifdef USE_BONSAI_TABLES
-BENCHMARK_F(query, cleary, TableFixture, 0, 100)
+BENCHMARK_F(query, clearyS, TableFixture, 0, 100)
 {
-   auto& cleary = *(static_fixture.m_cleary);
+   auto& cleary = *(static_fixture.m_clearyS);
    for(auto el : *static_fixture.m_map) {
       celero::DoNotOptimizeAway(cleary[el.first]);
    }
 }
-
-BENCHMARK_F(query, elias, TableFixture, 0, 100)
+BENCHMARK_F(query, clearyP, TableFixture, 0, 100)
 {
-   auto& elias = *(static_fixture.m_elias);
+   auto& cleary = *(static_fixture.m_clearyP);
+   for(auto el : *static_fixture.m_map) {
+      celero::DoNotOptimizeAway(cleary[el.first]);
+   }
+}
+BENCHMARK_F(query, eliasS, TableFixture, 0, 100)
+{
+   auto& elias = *(static_fixture.m_eliasS);
    for(auto el : *static_fixture.m_map) {
       celero::DoNotOptimizeAway(elias[el.first]);
    }
 }
 
-BENCHMARK_F(query, layered, TableFixture, 0, 100)
+BENCHMARK_F(query, eliasP, TableFixture, 0, 100)
 {
-   auto& layered = *(static_fixture.m_layered);
+   auto& elias = *(static_fixture.m_eliasP);
+   for(auto el : *static_fixture.m_map) {
+      celero::DoNotOptimizeAway(elias[el.first]);
+   }
+}
+BENCHMARK_F(query, layeredS, TableFixture, 0, 100)
+{
+   auto& layered = *(static_fixture.m_layeredS);
+   for(auto el : *static_fixture.m_map) {
+      celero::DoNotOptimizeAway(layered[el.first]);
+   }
+}
+
+BENCHMARK_F(query, layeredP, TableFixture, 0, 100)
+{
+   auto& layered = *(static_fixture.m_layeredP);
    for(auto el : *static_fixture.m_map) {
       celero::DoNotOptimizeAway(layered[el.first]);
    }
@@ -411,12 +455,15 @@ BENCH_INSERT(plainI, plain_type())
 BENCH_INSERT(plainD, plain_arb_type())
 BENCH_INSERT(avxI, avx2_type())
 BENCH_INSERT(avxD, avx2_arb_type())
-BENCH_INSERT(compactI, compact_type(Fixture::NUM_RANGE))
-BENCH_INSERT(compactD, compact_arb_type(Fixture::NUM_RANGE))
+BENCH_INSERT(chtI, compact_type(Fixture::NUM_RANGE))
+BENCH_INSERT(chtD, compact_arb_type(Fixture::NUM_RANGE))
 #ifdef USE_BONSAI_TABLES
-BENCH_INSERT(cleary, cleary_type())
-BENCH_INSERT(elias, elias_type())
-BENCH_INSERT(layered, layered_type())
+BENCH_INSERT(clearyP, clearyP_type())
+BENCH_INSERT(eliasP, eliasP_type())
+BENCH_INSERT(layeredP, layeredP_type())
+BENCH_INSERT(clearyS, clearyS_type())
+BENCH_INSERT(eliasS, eliasS_type())
+BENCH_INSERT(layeredS, layeredS_type())
 #endif//USE_BONSAI_TABLES
 #ifdef USE_BUCKET_TABLES
 BENCH_INSERT(bucket, bucket_type())
