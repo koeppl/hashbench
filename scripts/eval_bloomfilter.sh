@@ -1,6 +1,6 @@
 #!/bin/zsh
 jsonfile=$(tempfile)
-for dataset in ~/data/trie/*.distinct; do
+for dataset in ~/data/trie/*; do
 	../build/bloomfilter "$dataset" "$dataset" > "$jsonfile"
 	./readjson.sh "$jsonfile" |
 		while read -r line; do

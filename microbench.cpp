@@ -240,11 +240,11 @@ class TableFixture : public celero::TestFixture {
    }
 #else
    TableFixture()
-      : m_instance_length(12)
+      : m_instance_length(18)
       , m_problemspace(m_instance_length,0)
    {
       for(size_t i = 0; i < m_instance_length; ++i) {
-	 m_problemspace[i] = {static_cast<int64_t>(6 + (2ULL<<(i+4)))};
+	 m_problemspace[i] = {static_cast<int64_t>(1ULL<<(i+10))};
       }
    }
 #endif

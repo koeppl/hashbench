@@ -4,7 +4,7 @@ function printPhase {
 	title=$(echo "$1" | jq ".[\"title\"]")
 	time=$(echo "$1" | jq ".[\"timeDelta\"]")
 	mem=$(echo "$1" | jq ".[\"memPeak\"]")
-	echo "RESULT group=$title time=$time mem=$mem experiment=$2"
+	echo "RESULT group=$title time=$time mem=$mem experiment=$2" | sed 's@"@@g'
 }
 
 entries=$(jq '.["sub"] | length' "$1")

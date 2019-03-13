@@ -61,11 +61,13 @@ class CopyExperiment {
 	 }
 
       void baseline() {
-	 tdc::StatPhase v("plain array");
-	 key_type* keys = new key_type[m_map.size()];
-	 value_type* values = new value_type[m_map.size()];
+	 tdc::StatPhase v("array");
+	 key_type* keys = nullptr;
+	 value_type* values = nullptr;
 	 {
 	    tdc::StatPhase v2("insert");
+	    keys = new key_type[m_map.size()];
+	    values = new value_type[m_map.size()];
 	    size_t i = 0;
 	    for(auto el : m_map) {
 	       keys[i] = el.first;

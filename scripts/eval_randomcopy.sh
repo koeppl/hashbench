@@ -2,7 +2,7 @@
 size=1024
 jsonfile=$(tempfile)
 
-while [[ $size -lt 1073741824 ]]; do
+while [[ $size -le 268435456 ]]; do
 	../build/randomcopy "$size" > "$jsonfile"
 	./readjson.sh "$jsonfile" |
 		while read -r line; do
