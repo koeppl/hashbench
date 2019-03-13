@@ -1,5 +1,3 @@
-#define USE_BONSAI_TABLES
-
 #include <celero/Celero.h>
 
 #include <rigtorp/HashMap.h>

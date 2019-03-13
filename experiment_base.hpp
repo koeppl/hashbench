@@ -29,7 +29,7 @@ void run_experiments(experiment_t& ex) {
       ex.init(root);
 
       ex.baseline();
-#ifdef USE_BONSAI_HASH
+#ifdef USE_BONSAI_TABLES
       if(ex.KEY_BITSIZE < 64)
       {
          tdc::compact_hash::map::sparse_elias_hashmap_t<value_type> filter(0,ex.KEY_BITSIZE);
@@ -45,7 +45,7 @@ void run_experiments(experiment_t& ex) {
          tdc::compact_hash::map::sparse_layered_hashmap_t<value_type> filter(0,ex.KEY_BITSIZE);
          ex.execute("layered", filter);
       }
-#endif//USE_BONSAIHASH
+#endif//USE_BONSAI_TABLES
       {
 	 separate_chaining_map<plain_bucket<key_type>, plain_bucket<value_type>  , hash_mapping_adapter<key_type , std::hash<key_type> >> filter;
 	 ex.execute("plainI", filter);

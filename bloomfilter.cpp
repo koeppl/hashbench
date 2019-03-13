@@ -5,7 +5,6 @@
 
 #include "experiment_base.hpp"
 using namespace std;
-#undef STATS_DISABLED
 
 
 template<class hashmap>
