@@ -62,6 +62,7 @@ void bloomfilter_test(istream& keyword_stream, istream& query_stream, hashmap& f
 
 class BloomFilterExperiment {
    public:
+      using mock_key_type = uint64_t;
       using key_type = uint64_t;
       using value_type = uint32_t;
 

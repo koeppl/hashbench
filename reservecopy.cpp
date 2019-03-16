@@ -5,17 +5,26 @@ T random_int(const T& maxvalue) {
    return static_cast<T>(std::rand() * (1.0 / (RAND_MAX + 1.0 )) * maxvalue);
 }
 
+template <typename T, typename = void>
+struct has_reserve_fn
+    : std::false_type
+{};
+
+template <typename T>
+struct has_reserve_fn<T, std::void_t<decltype(std::declval<T>().reserve(std::declval<size_t>()  ))>> : std::true_type
+{};
+
 
 
 class CopyExperiment {
    public:
-      using mock_key_type = uint32_t;
       using key_type = uint32_t;
+      using mock_key_type = uint16_t;
       using value_type = uint32_t;
 
-      const size_t NUM_ELEMENTS = 2000000;
-      static constexpr uint8_t KEY_BITSIZE = 32;
-      static_assert(sizeof(key_type)*8 >= KEY_BITSIZE, "Num range must fit into key_type");
+      const size_t NUM_ELEMENTS;
+      const uint8_t KEY_BITSIZE;
+      // static_assert(sizeof(key_type)*8 >= KEY_BITSIZE, "Num range must fit into key_type");
 
    private:
       using map_type = std::unordered_map<key_type, value_type>;
@@ -31,7 +40,10 @@ class CopyExperiment {
       }
       const char* caption() const { return m_caption; }
 
-      CopyExperiment(const char*const caption, size_t num_elements) : NUM_ELEMENTS(num_elements), m_caption(caption) {
+      CopyExperiment(const char*const caption, const size_t num_elements) 
+	 : NUM_ELEMENTS(num_elements)
+	 , KEY_BITSIZE(tdc::bits_for(NUM_ELEMENTS) + 8)
+	 , m_caption(caption) {
 	 DCHECK_LT(NUM_ELEMENTS, 1ULL<<KEY_BITSIZE);
 	    for(size_t i = 0; m_map.size() < NUM_ELEMENTS; ++i) {
 	       m_map[random_int(1ULL<<KEY_BITSIZE)] = i;
@@ -44,6 +56,10 @@ class CopyExperiment {
 	    tdc::StatPhase v(label);
 	    {
 	       tdc::StatPhase v2("insert");
+
+	       if constexpr (has_reserve_fn<T>::value) {
+		  filter.reserve(1ULL << (KEY_BITSIZE - 16));
+	       }
 	       for(auto el : m_map) {
 		  filter[el.first] = el.second;
 	       }

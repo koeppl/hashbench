@@ -11,10 +11,14 @@ if(STATS_DISABLED)
     message("[INFO] Statistic tracking is disabled")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DSTATS_DISABLED=1")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DSTATS_DISABLED=1")
+else(STATS_DISABLED)
+    message("[INFO] Statistic tracking is enabled")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DSTATS_ENABLED=1")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DSTATS_ENABLED=1")
 endif(STATS_DISABLED)
 
 set(CXX_STANDARD gnu++17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -march=native -std=${CXX_STANDARD}  -DUSE_BONSAI_TABLES")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -march=native -std=${CXX_STANDARD}  -DUSE_BONSAI_TABLES") # -DMALLOC_DISABLED=1")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 -ggdb ") #-D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mtune=native")
 
@@ -65,12 +69,14 @@ endif()
 ##########
 
 add_executable  (randomcopy randomcopy.cpp)
+add_executable  (reservecopy reservecopy.cpp)
 add_executable  (bloomfilter bloomfilter.cpp external/smhasher/src/MurmurHash3.cpp) 
 
 
 if(NOT STATS_DISABLED)
     message("[INFO] Statistic tracking is enabled")
 target_link_libraries(randomcopy tudocomp_stat glog)
+target_link_libraries(reservecopy tudocomp_stat glog)
 target_link_libraries(bloomfilter tudocomp_stat glog)
 endif(NOT STATS_DISABLED)
 

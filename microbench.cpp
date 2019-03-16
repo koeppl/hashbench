@@ -1,3 +1,7 @@
+#ifdef STATS_ENABLED
+#undef STATS_ENABLED
+#endif
+
 #include <celero/Celero.h>
 
 #include <rigtorp/HashMap.h>
@@ -5,6 +9,7 @@
 #include <sparsehash/sparse_hash_map>
 
 #include <separate/separate_chaining_table.hpp>
+#include <separate/compact_chaining_map.hpp>
 #include <separate/dcheck.hpp>
 #include <map>
 
@@ -43,8 +48,9 @@ class Fixture {
    using plain_type     = separate_chaining_map<plain_bucket<key_type> , plain_bucket<value_type>  , hash_mapping_adapter<key_type , SplitMix>>;
    using avx2_type      = separate_chaining_map<avx2_bucket<key_type>  , plain_bucket<value_type>  , hash_mapping_adapter<key_type , SplitMix>, incremental_resize>;
    using avx2_arb_type      = separate_chaining_map<avx2_bucket<key_type>  , plain_bucket<value_type>  , hash_mapping_adapter<key_type , SplitMix>, arbitrary_resize>;
-   using compact_type   = separate_chaining_map<varwidth_bucket        , plain_bucket<value_type>  , xorshift_hash<>, incremental_resize>;
-   using compact_arb_type   = separate_chaining_map<varwidth_bucket        , plain_bucket<value_type>  , xorshift_hash<>, arbitrary_resize>;
+   using compact_type   = separate_chaining_map<varwidth_bucket<>        , plain_bucket<value_type>  , xorshift_hash<>, incremental_resize>;
+   using compact_arb_type   = separate_chaining_map<varwidth_bucket<>        , plain_bucket<value_type>  , xorshift_hash<>, arbitrary_resize>;
+   using compact_chain_type   = compact_chaining_map<xorshift_hash<> >;
 #ifdef USE_BONSAI_TABLES
    using eliasS_type     = tdc::compact_hash::map::sparse_elias_hashmap_t<value_type>;
    using clearyS_type    = tdc::compact_hash::map::sparse_cv_hashmap_t<value_type>;
@@ -55,9 +61,9 @@ class Fixture {
 #endif//USE_BONSAI_TABLES
 
 #ifdef USE_BUCKET_TABLES
-   using bucket_type   = bucket_table<varwidth_bucket        , plain_bucket<value_type>, incremental_resize>;
-   using bucket_arb_type   = bucket_table<varwidth_bucket        , plain_bucket<value_type>, arbitrary_resize_bucket>;
-   using bucket_avx2_type   = bucket_table<varwidth_bucket        , plain_bucket<value_type>, incremental_resize>;
+   using bucket_type   = bucket_table<varwidth_bucket<>        , plain_bucket<value_type>, incremental_resize>;
+   using bucket_arb_type   = bucket_table<varwidth_bucket<>        , plain_bucket<value_type>, arbitrary_resize_bucket>;
+   using bucket_avx2_type   = bucket_table<varwidth_bucket<>        , plain_bucket<value_type>, incremental_resize>;
 #endif//USE_BUCKET_TABLES
 
    map_type* m_map = nullptr;
@@ -68,6 +74,7 @@ class Fixture {
    avx2_arb_type* m_avx_arb = nullptr;
    compact_type* m_compact = nullptr;
    compact_arb_type* m_compact_arb = nullptr;
+   compact_chain_type *m_compact_chain = nullptr;
 
    rigtorp_type* m_rigtorp = nullptr;
    google_type* m_google = nullptr;
@@ -104,6 +111,7 @@ class Fixture {
       m_avx_arb = new avx2_arb_type();
       m_compact = new compact_type(NUM_RANGE);
       m_compact_arb = new compact_arb_type(NUM_RANGE);
+      m_compact_chain = new compact_chain_type(NUM_RANGE, sizeof(value_type)*8);
       m_rigtorp = new rigtorp_type(0, static_cast<key_type>(-1ULL));
       m_google = new google_type();
       m_tsl = new tsl_type();
@@ -134,6 +142,7 @@ class Fixture {
 	 (*m_avx_arb)[el.first] = el.second;
 	 (*m_compact)[el.first] = el.second;
 	 (*m_compact_arb)[el.first] = el.second;
+	 (*m_compact_chain)[el.first] = el.second;
 	 (*m_google)[el.first] = el.second;
 	 (*m_rigtorp)[el.first] = el.second;
 	 (*m_tsl)[el.first] = el.second;
@@ -159,6 +168,7 @@ class Fixture {
 	 DCHECK_EQ((*m_avx_arb)[el.first], el.second);
 	 DCHECK_EQ((*m_compact)[el.first], el.second);
 	 DCHECK_EQ((*m_compact_arb)[el.first], el.second);
+	 DCHECK_EQ((*m_compact_chain)[el.first], el.second);
 	 DCHECK_EQ((*m_google)[el.first], el.second);
 	 DCHECK_EQ((*m_rigtorp)[el.first], el.second);
 	 DCHECK_EQ((*m_tsl)[el.first], el.second);
@@ -184,6 +194,7 @@ class Fixture {
       DCHECK_EQ(m_avx_arb->size(), m_ordered->size());
       DCHECK_EQ(m_compact->size(), m_ordered->size());
       DCHECK_EQ(m_compact_arb->size(), m_ordered->size());
+      DCHECK_EQ(m_compact_chain->size(), m_ordered->size());
       DCHECK_EQ(m_google->size(), m_ordered->size());
       DCHECK_EQ(m_rigtorp->size(), m_ordered->size());
       DCHECK_EQ(m_tsl->size(), m_ordered->size());
@@ -212,6 +223,7 @@ class Fixture {
 	 delete m_avx_arb;
 	 delete m_compact;
 	 delete m_compact_arb;
+	 delete m_compact_chain;
 #ifdef USE_BONSAI_TABLES
 	 delete m_eliasS;
 	 delete m_layeredS;
@@ -263,7 +275,7 @@ class TableFixture : public celero::TestFixture {
    }
 #else
    TableFixture()
-      : m_instance_length(36)
+      : m_instance_length(10)
       , m_problemspace(m_instance_length,0)
    {
       size_t value = 1024;
@@ -341,6 +353,13 @@ BENCHMARK_F(query, chtI, TableFixture, 0, 100)
 BENCHMARK_F(query, chtD, TableFixture, 0, 100)
 {
    const auto& compact = *(static_fixture.m_compact_arb);
+   for(auto el : *static_fixture.m_map) {
+      celero::DoNotOptimizeAway(compact.find(el.first));
+   }
+}
+BENCHMARK_F(query, chmap, TableFixture, 0, 100)
+{
+   const auto& compact = *(static_fixture.m_compact_chain);
    for(auto el : *static_fixture.m_map) {
       celero::DoNotOptimizeAway(compact.find(el.first));
    }
@@ -457,6 +476,7 @@ BENCH_INSERT(avxI, avx2_type())
 BENCH_INSERT(avxD, avx2_arb_type())
 BENCH_INSERT(chtI, compact_type(Fixture::NUM_RANGE))
 BENCH_INSERT(chtD, compact_arb_type(Fixture::NUM_RANGE))
+BENCH_INSERT(chmap, compact_chain_type(Fixture::NUM_RANGE, sizeof(Fixture::value_type)*8))
 #ifdef USE_BONSAI_TABLES
 BENCH_INSERT(clearyP, clearyP_type())
 BENCH_INSERT(eliasP, eliasP_type())

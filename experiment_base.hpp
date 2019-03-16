@@ -5,6 +5,7 @@
 #include <rigtorp/HashMap.h>
 #include <tsl/sparse_map.h>
 #include <separate/separate_chaining_table.hpp>
+#include <separate/compact_chaining_map.hpp>
 #include <sparsehash/sparse_hash_map>
 
 #include <tudocomp_stat/json.hpp>
@@ -18,6 +19,7 @@ void run_experiments(experiment_t& ex) {
       using namespace separate_chaining;
       using experiment_type = experiment_t;
 
+      using mock_key_type = typename experiment_type::mock_key_type;
       using key_type = typename experiment_type::key_type;
       using value_type = typename experiment_type::value_type;
 
@@ -29,6 +31,68 @@ void run_experiments(experiment_t& ex) {
       ex.init(root);
 
       ex.baseline();
+
+      {
+	 compact_chaining_map<xorshift_hash<>, uint8_t> filter(ex.KEY_BITSIZE, sizeof(value_type)*8);
+	 ex.execute("chmap", filter);
+      }
+      // {
+	//  compact_chaining_map<xorshift_hash<>, uint64_t> filter(ex.KEY_BITSIZE, sizeof(value_type)*8);
+	//  ex.execute("chmap64", filter);
+      // }
+      {
+	 separate_chaining_map<varwidth_bucket<>, plain_bucket<value_type>, xorshift_hash<>> filter(ex.KEY_BITSIZE);
+	 ex.execute("chtI", filter);
+      }
+      {
+	 separate_chaining_map<varwidth_bucket<>, plain_bucket<value_type>, xorshift_hash<>, arbitrary_resize> filter(ex.KEY_BITSIZE);
+	 ex.execute("chtD", filter);
+      }
+
+      if constexpr(!std::is_same<mock_key_type, key_type>::value) {
+      {
+	 separate_chaining_map<plain_bucket<mock_key_type>, plain_bucket<value_type>  , xorshift_hash<key_type, mock_key_type> > filter(ex.KEY_BITSIZE);
+	 ex.execute("plainMI", filter);
+      }
+      {
+	 separate_chaining_map<plain_bucket<mock_key_type>, plain_bucket<value_type>  , xorshift_hash<key_type, mock_key_type>, arbitrary_resize> filter(ex.KEY_BITSIZE);
+	 ex.execute("plainMD", filter);
+      }
+
+#if defined(STATS_DISABLED) || defined(MALLOC_DISABLED)
+      {
+	 separate_chaining_map<avx2_bucket<mock_key_type>, plain_bucket<value_type>  , xorshift_hash<key_type, mock_key_type>, incremental_resize> filter(ex.KEY_BITSIZE);
+	 ex.execute("avxMI", filter);
+      }
+      {
+	 separate_chaining_map<avx2_bucket<mock_key_type>, plain_bucket<value_type>  , xorshift_hash<key_type, mock_key_type>, arbitrary_resize> filter(ex.KEY_BITSIZE);
+	 ex.execute("avxMD", filter);
+      }
+#endif
+      }//if constexpr
+
+
+      {
+	 separate_chaining_map<plain_bucket<key_type>, plain_bucket<value_type>  , hash_mapping_adapter<key_type , std::hash<key_type> >> filter;
+	 ex.execute("plainI", filter);
+      }
+      {
+	 separate_chaining_map<plain_bucket<key_type>, plain_bucket<value_type>  , hash_mapping_adapter<key_type , std::hash<key_type> >, arbitrary_resize> filter;
+	 ex.execute("plainD", filter);
+      }
+
+#if defined(STATS_DISABLED) || defined(MALLOC_DISABLED)
+      {
+	 separate_chaining_map<avx2_bucket<key_type>, plain_bucket<value_type>  , hash_mapping_adapter<key_type , std::hash<key_type> >, incremental_resize> filter;
+	 ex.execute("avxI", filter);
+      }
+      {
+	 separate_chaining_map<avx2_bucket<key_type>, plain_bucket<value_type>  , hash_mapping_adapter<key_type , std::hash<key_type> >, arbitrary_resize> filter;
+	 ex.execute("avxD", filter);
+      }
+#endif
+
+
 #ifdef USE_BONSAI_TABLES
       if(ex.KEY_BITSIZE < 64)
       {
@@ -61,34 +125,7 @@ void run_experiments(experiment_t& ex) {
          ex.execute("layeredP", filter);
       }
 #endif//USE_BONSAI_TABLES
-      {
-	 separate_chaining_map<plain_bucket<key_type>, plain_bucket<value_type>  , hash_mapping_adapter<key_type , std::hash<key_type> >> filter;
-	 ex.execute("plainI", filter);
-      }
-      {
-	 separate_chaining_map<plain_bucket<key_type>, plain_bucket<value_type>  , hash_mapping_adapter<key_type , std::hash<key_type> >, arbitrary_resize> filter;
-	 ex.execute("plainD", filter);
-      }
 
-#if defined(STATS_DISABLED) || defined(MALLOC_DISABLED)
-      {
-	 separate_chaining_map<avx2_bucket<key_type>, plain_bucket<value_type>  , hash_mapping_adapter<key_type , std::hash<key_type> >, incremental_resize> filter;
-	 ex.execute("avxI", filter);
-      }
-      {
-	 separate_chaining_map<avx2_bucket<key_type>, plain_bucket<value_type>  , hash_mapping_adapter<key_type , std::hash<key_type> >, arbitrary_resize> filter;
-	 ex.execute("avxD", filter);
-      }
-#endif
-
-      {
-	 separate_chaining_map<varwidth_bucket, plain_bucket<value_type>, xorshift_hash<>> filter(ex.KEY_BITSIZE);
-	 ex.execute("chtI", filter);
-      }
-      {
-	 separate_chaining_map<varwidth_bucket, plain_bucket<value_type>, xorshift_hash<>, arbitrary_resize> filter(ex.KEY_BITSIZE);
-	 ex.execute("chtD", filter);
-      }
 
       {
 	 tsl::sparse_map<key_type,value_type> filter;
