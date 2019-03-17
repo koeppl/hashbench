@@ -94,32 +94,26 @@ void run_experiments(experiment_t& ex) {
 
 
 #ifdef USE_BONSAI_TABLES
-      if(ex.KEY_BITSIZE < 64)
       {
          tdc::compact_hash::map::sparse_elias_hashmap_t<value_type> filter(0,ex.KEY_BITSIZE);
          ex.execute("eliasS", filter);
       }
-      if(ex.KEY_BITSIZE < 64)
       {
          tdc::compact_hash::map::sparse_cv_hashmap_t<value_type> filter(0,ex.KEY_BITSIZE);
          ex.execute("clearyS", filter);
       }
-      if(ex.KEY_BITSIZE < 64)
       {
          tdc::compact_hash::map::sparse_layered_hashmap_t<value_type> filter(0,ex.KEY_BITSIZE);
          ex.execute("layeredS", filter);
       }
-      if(ex.KEY_BITSIZE < 64)
       {
          tdc::compact_hash::map::plain_elias_hashmap_t<value_type> filter(0,ex.KEY_BITSIZE);
          ex.execute("eliasP", filter);
       }
-      if(ex.KEY_BITSIZE < 64)
       {
          tdc::compact_hash::map::plain_cv_hashmap_t<value_type> filter(0,ex.KEY_BITSIZE);
          ex.execute("clearyP", filter);
       }
-      if(ex.KEY_BITSIZE < 64)
       {
          tdc::compact_hash::map::plain_layered_hashmap_t<value_type> filter(0,ex.KEY_BITSIZE);
          ex.execute("layeredP", filter);
