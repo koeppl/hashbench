@@ -8,7 +8,7 @@ using namespace std;
 
 
 template<class hashmap>
-void bloomfilter_test(istream& keyword_stream, istream& query_stream, hashmap& filter) {
+void fingerprint_test(istream& keyword_stream, istream& query_stream, hashmap& filter) {
 	uint32_t seed = 3;
 	//std::unordered_map<uint64_t,uint64_t> filter;
 	//std::unordered_set<uint64_t> filter1;
@@ -60,7 +60,7 @@ void bloomfilter_test(istream& keyword_stream, istream& query_stream, hashmap& f
 
 
 
-class BloomFilterExperiment {
+class FingerprintExperiment {
    public:
       using mock_key_type = uint64_t;
       using key_type = uint64_t;
@@ -80,7 +80,7 @@ class BloomFilterExperiment {
       }
       const char* caption() const { return m_caption; }
 
-      BloomFilterExperiment(const char*const caption, const char*const keyword_file, const char*const query_file) : m_caption(caption), m_keyword_file(keyword_file), m_query_file(query_file) {
+      FingerprintExperiment(const char*const caption, const char*const keyword_file, const char*const query_file) : m_caption(caption), m_keyword_file(keyword_file), m_query_file(query_file) {
       }
 
       template<class T>
@@ -91,7 +91,7 @@ class BloomFilterExperiment {
 	    tdc::StatPhase v(label);
 	    ifstream keyword_stream(m_keyword_file);
 	    ifstream query_stream(m_query_file);
-	    bloomfilter_test(keyword_stream, query_stream, filter);
+	    fingerprint_test(keyword_stream, query_stream, filter);
 	    if constexpr (has_print_stats_fn<T>::value) {
 	       tdc::StatPhase finalize("finalize");
 	       filter.print_stats(finalize);
@@ -128,7 +128,7 @@ int main(int argc, char **argv) {
 
 
 
-	BloomFilterExperiment ex("Bloomfilter", argv[1], argv[2]);
+	FingerprintExperiment ex("fingerprint", argv[1], argv[2]);
 	run_experiments(ex);
 
 	return 0;

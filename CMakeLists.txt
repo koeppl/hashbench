@@ -70,14 +70,14 @@ endif()
 
 add_executable  (randomcopy randomcopy.cpp)
 add_executable  (reservecopy reservecopy.cpp)
-add_executable  (bloomfilter bloomfilter.cpp external/smhasher/src/MurmurHash3.cpp) 
+add_executable  (fingerprint fingerprint.cpp external/smhasher/src/MurmurHash3.cpp) 
 
 
 if(NOT STATS_DISABLED)
     message("[INFO] Statistic tracking is enabled")
 target_link_libraries(randomcopy tudocomp_stat glog)
 target_link_libraries(reservecopy tudocomp_stat glog)
-target_link_libraries(bloomfilter tudocomp_stat glog)
+target_link_libraries(fingerprint tudocomp_stat glog)
 endif(NOT STATS_DISABLED)
 
 

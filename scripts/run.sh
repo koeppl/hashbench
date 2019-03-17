@@ -5,7 +5,7 @@ if [[ ! -d ../build ]]; then
 	make -C ../build
 fi
 mkdir -p eval
-./eval_bloomfilter.sh | tee eval/bloomfilter.txt
+./eval_fingerprint.sh | tee eval/fingerprint.txt
 ./eval_randomcopy.sh | tee eval/random.txt
 ./eval_reservedcopy.sh | tee eval/reserve.txt
 ./microbench.sh | tee eval/microbench.txt
