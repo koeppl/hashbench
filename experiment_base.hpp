@@ -94,7 +94,7 @@ void run_experiments(experiment_t& ex) {
 
 
 #ifdef USE_BONSAI_TABLES
-      {
+      {//TODO: this implementation forgets hashed entries in the fingerprint test with the `cc` dataset
          tdc::compact_hash::map::sparse_elias_hashmap_t<value_type> filter(0,ex.KEY_BITSIZE);
          ex.execute("eliasS", filter);
       }
@@ -110,7 +110,7 @@ void run_experiments(experiment_t& ex) {
          tdc::compact_hash::map::plain_elias_hashmap_t<value_type> filter(0,ex.KEY_BITSIZE);
          ex.execute("eliasP", filter);
       }
-      {
+      {//TODO: this implementation causes an infinite loop in the fingerprint test with the `cc` dataset
          tdc::compact_hash::map::plain_cv_hashmap_t<value_type> filter(0,ex.KEY_BITSIZE);
          ex.execute("clearyP", filter);
       }
