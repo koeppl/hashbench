@@ -19,3 +19,6 @@
 [submodule "external/compact_sparse_hash"]
 	path = external/compact_sparse_hash
 	url = https://github.com/tudocomp/compact_sparse_hash
+[submodule "external/separate_chaining"]
+	path = external/separate_chaining
+	url = https://github.com/koeppl/separate_chaining
