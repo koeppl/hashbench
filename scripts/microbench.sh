@@ -1,6 +1,13 @@
-#!/bin/zsh
+#!/bin/sh
+
+# For debugging: exit script on the first failure
+set -e
+set -o pipefail
+
 csvfile=$(mktemp)
+set -x
 ../build/microbench -t $csvfile
+set +x
 columns=( $(head -n1 -q $csvfile | sed -e 's@ @_@g' -e 's@Problem_Space@problemspace@' -e 's@_(us)@@g'| tr '[:upper:]' '[:lower:]' | tr ',' '\n') )
 tail -n+2 $csvfile | \
 while read line; do
