@@ -34,7 +34,7 @@ include_directories(external/separate_chaining/include)
 include_directories(external/smhasher/src)
 
 add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/external/googlesparse/src/config.h
-    COMMAND ${PROJECT_SOURCE_DIR}/external/googlesparse/configure)
+    COMMAND cd ${PROJECT_SOURCE_DIR}/external/googlesparse && ./configure && make)
 add_custom_target(googlesparse_config DEPENDS ${PROJECT_SOURCE_DIR}/external/googlesparse/src/config.h)
 
 
