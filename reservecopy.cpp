@@ -28,7 +28,7 @@ class CopyExperiment {
 
    private:
       using map_type = std::unordered_map<key_type, value_type>;
-      
+
       map_type m_map;
 
       const char*const m_caption;
@@ -40,7 +40,7 @@ class CopyExperiment {
       }
       const char* caption() const { return m_caption; }
 
-      CopyExperiment(const char*const caption, const size_t num_elements) 
+      CopyExperiment(const char*const caption, const size_t num_elements)
 	 : NUM_ELEMENTS(num_elements)
 	 , KEY_BITSIZE(tdc::bits_for(NUM_ELEMENTS) + 8)
 	 , m_caption(caption) {
@@ -72,7 +72,7 @@ class CopyExperiment {
 	       tdc::StatPhase v2("query");
 	       for(auto el : m_map) {
 		  if(filter[el.first] != el.second) {
-		     std::cerr << "Element " << el.first << " -> " << el.second << " not found in table " << typeid(T).name() << std::endl;
+		     std::cerr << "Element " << el.first << " -> " << el.second << " not found in table " << demangled_type(T) << std::endl;
 		  }
 	       }
 	    }

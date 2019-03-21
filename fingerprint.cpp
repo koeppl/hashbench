@@ -22,7 +22,7 @@ void fingerprint_test(istream& keyword_stream, istream& query_stream, hashmap& f
 		while(std::getline(keyword_stream, line)) {
 			MurmurHash3_x64_128(line.data(), line.length(), seed, arr);
 			if(filter.find(arr[0]) != filter.end()) { // && filter1.find(arr[1]) != filter1.end()) {
-			   std::cerr << "Key of element " << arr[0] << " -> " << elements << " already present with value " << filter[arr[0]] << " in table " << typeid(hashmap).name() << std::endl;
+			   std::cerr << "Key of element " << arr[0] << " -> " << elements << " already present with value " << filter[arr[0]] << " in table " << demangled_type(hashmap) << std::endl;
 			}
 			filter[arr[0]] = elements;
 			//filter1.insert(arr[1]);
@@ -45,7 +45,7 @@ void fingerprint_test(istream& keyword_stream, istream& query_stream, hashmap& f
 		while(std::getline(query_stream, line)) {
 			MurmurHash3_x64_128(line.data(), line.length(), seed, arr);
 			if(filter.find(arr[0]) == filter.end()) { //|| filter1.find(arr[1]) == filter1.end()) {
-			   std::cerr << "Key " << arr[0] << " should be present, but is absent in table " << typeid(hashmap).name() << std::endl;
+			   std::cerr << "Key " << arr[0] << " should be present, but is absent in table " << demangled_type(hashmap) << std::endl;
 			}
 		}
 		clock_t end = clock();
