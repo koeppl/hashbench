@@ -33,6 +33,11 @@ include_directories(external/tslsparse/include)
 include_directories(external/separate_chaining/include)
 include_directories(external/smhasher/src)
 
+add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/external/googlesparse/src/config.h
+    COMMAND ${PROJECT_SOURCE_DIR}/external/googlesparse/configure)
+add_custom_target(googlesparse_config DEPENDS ${PROJECT_SOURCE_DIR}/external/googlesparse/src/config.h)
+
+
 
 add_subdirectory(external/bit_span)
 add_subdirectory(external/tudostats)
@@ -51,6 +56,7 @@ else()
 	include_directories(${CELERO_INCLUDE_DIR})
 endif()
 
+
 if(NO_CELERO EQUAL 0)
     include_directories(external/compact_sparse_hash/include)
 
@@ -61,6 +67,8 @@ if(NO_CELERO EQUAL 0)
     target_compile_definitions(microbench_tiny PUBLIC USE_BUCKET_TABLES=1)
     target_link_libraries(microbench_tiny ${CELERO_LIB} glog)
 
+add_dependencies(microbench googlesparse_config)
+add_dependencies(microbench_tiny googlesparse_config)
 endif()
 
 
@@ -71,6 +79,10 @@ endif()
 add_executable  (randomcopy randomcopy.cpp)
 add_executable  (reservecopy reservecopy.cpp)
 add_executable  (fingerprint fingerprint.cpp external/smhasher/src/MurmurHash3.cpp) 
+
+add_dependencies(randomcopy googlesparse_config)
+add_dependencies(reservecopy googlesparse_config)
+add_dependencies(fingerprint googlesparse_config)
 
 
 if(NOT STATS_DISABLED)
