@@ -105,6 +105,8 @@ class FingerprintExperiment {
 
 
 int main(int argc, char **argv) {
+    ::google::InitGoogleLogging(argv[0]);
+
 	free(malloc(42));
 
 	if(argc < 3) {

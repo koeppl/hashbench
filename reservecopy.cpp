@@ -113,6 +113,8 @@ class CopyExperiment {
 };
 
 int main(int argc, char** argv) {
+   ::google::InitGoogleLogging(argv[0]);
+
    if(argc != 2) {
       std::cerr << "Usage: " << argv[0] << " problem-size" << std::endl;
       return 1;
