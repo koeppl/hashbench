@@ -18,7 +18,7 @@ else(STATS_DISABLED)
 endif(STATS_DISABLED)
 
 set(CXX_STANDARD gnu++17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -march=native -std=${CXX_STANDARD}  -DUSE_BONSAI_TABLES") # -DMALLOC_DISABLED=1")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -march=native -fdiagnostics-color=auto -std=${CXX_STANDARD}  -DUSE_BONSAI_TABLES") # -DMALLOC_DISABLED=1")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 -ggdb ") #-D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mtune=native")
 
@@ -78,7 +78,7 @@ endif()
 
 add_executable  (randomcopy randomcopy.cpp)
 add_executable  (reservecopy reservecopy.cpp)
-add_executable  (fingerprint fingerprint.cpp external/smhasher/src/MurmurHash3.cpp) 
+add_executable  (fingerprint fingerprint.cpp external/smhasher/src/MurmurHash3.cpp)
 
 add_dependencies(randomcopy googlesparse_config)
 add_dependencies(reservecopy googlesparse_config)
