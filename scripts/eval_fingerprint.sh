@@ -7,17 +7,17 @@ if [[ ! -d ~/data/trie/ ]]; then
 	read line
 	mkdir -p ~/data/trie/
 	cd ~/data/
-	wget --recursive --no-parent -R "index.html*" -nH  http://dolomit.cs.tu-dortmund.de/trie/ 
+	wget --recursive --no-parent -R "index.html*" -nH  http://dolomit.cs.tu-dortmund.de/trie/
 fi
 
 cd "$lpwd"
 
-jsonfile=$(tempfile)
+jsonfile=$(mktemp)
 for dataset in ~/data/trie/*; do
 	../build/bloomfilter "$dataset" "$dataset" > "$jsonfile"
 	./readjson.sh "$jsonfile" |
 		while read -r line; do
 			echo "$line filename=$(basename $dataset)"
-		done 
+		done
 done
 rm $jsonfile

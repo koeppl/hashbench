@@ -1,5 +1,5 @@
 #!/bin/zsh
-csvfile=$(tempfile)
+csvfile=$(mktemp)
 ../build/microbench -t $csvfile
 columns=( $(head -n1 -q $csvfile | sed -e 's@ @_@g' -e 's@Problem_Space@problemspace@' -e 's@_(us)@@g'| tr '[:upper:]' '[:lower:]' | tr ',' '\n') )
 tail -n+2 $csvfile | \
