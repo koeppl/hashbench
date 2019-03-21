@@ -66,6 +66,8 @@ class Fixture {
    using bucket_avx2_type   = bucket_table<varwidth_bucket<>        , plain_bucket<value_type>, incremental_resize>;
 #endif//USE_BUCKET_TABLES
 
+   static constexpr size_t m_missed_els_size = 256;
+   std::vector<key_type> m_missed_els;
    map_type* m_map = nullptr;
    unordered_type* m_ordered = nullptr;
    plain_type* m_plain = nullptr;
@@ -131,8 +133,18 @@ class Fixture {
       m_bucket_avx2 = new bucket_avx2_type(NUM_RANGE);
 #endif//USE_BUCKET_TABLES
 
-      for(size_t val = 0; val < m_current_instance; ++val) {
-	 (*m_map)[random_int(1ULL<<NUM_RANGE)] = val;
+      for(size_t val = 0; val < m_current_instance;) {
+	 const key_type key = random_int(1ULL<<NUM_RANGE);
+	 if( m_map->find(key) != m_map->end()) continue;
+	 (*m_map)[key] = val++;
+      }
+      m_missed_els.clear();
+      m_missed_els.reserve(m_missed_els_size);
+      for(size_t val = 0; val < m_missed_els_size;) {
+	 const key_type key = random_int(1ULL<<NUM_RANGE);
+	 if( m_map->find(key) != m_map->end()) continue;
+	 m_missed_els.push_back(key); 
+	 ++val;
       }
       for(auto el : *m_map) {
 	 (*m_ordered)[el.first] = el.second;
@@ -250,6 +262,7 @@ Fixture static_fixture;
 
 class TableFixture : public celero::TestFixture {
 
+   protected:
 
    const size_t m_instance_length;
 
@@ -275,7 +288,7 @@ class TableFixture : public celero::TestFixture {
    }
 #else
    TableFixture()
-      : m_instance_length(10)
+      : m_instance_length(19)
       , m_problemspace(m_instance_length,0)
    {
       size_t value = 1024;
@@ -493,3 +506,130 @@ BENCH_INSERT(bucket_avx2, bucket_avx2_type())
 BENCH_INSERT(google, google_type())
 BENCH_INSERT(rigtorp, rigtorp_type(0, static_cast<Fixture::key_type>(-1ULL)))
 BENCH_INSERT(tsl, tsl_type())
+
+
+BASELINE_F(miss, std, TableFixture, 0, 100)
+{
+   auto& map = *(static_fixture.m_ordered);
+   for(auto el : static_fixture.m_missed_els) { celero::DoNotOptimizeAway(map[el]); }
+}
+
+
+#define BENCH_MISS(name,instance) \
+      BENCHMARK_F(miss, name, TableFixture, 0, 100) { \
+	 auto& map = *(static_fixture.instance);\
+	 for(auto el : static_fixture.m_missed_els) { celero::DoNotOptimizeAway(map[el]); }}
+
+
+BENCH_MISS(plainI, m_plain)
+BENCH_MISS(plainD, m_plain_arb)
+BENCH_MISS(avxI, m_avx)
+BENCH_MISS(avxD, m_avx_arb)
+BENCH_MISS(chtI, m_compact)
+BENCH_MISS(chtD, m_compact_arb)
+BENCH_MISS(chmap, m_compact_chain)
+#ifdef USE_BONSAI_TABLES
+BENCH_MISS(clearyP, m_clearyP)
+BENCH_MISS(eliasP, m_eliasP)
+BENCH_MISS(layeredP, m_layeredP)
+BENCH_MISS(clearyS, m_clearyS)
+BENCH_MISS(eliasS, m_eliasS)
+BENCH_MISS(layeredS, m_layeredS)
+#endif//USE_BONSAI_TABLES
+BENCH_MISS(google, m_google)
+BENCH_MISS(rigtorp, m_rigtorp)
+BENCH_MISS(tsl, m_tsl)
+
+
+
+class EraseFixture : public TableFixture {
+   public:
+      using key_type = Fixture::key_type;
+      using value_type = Fixture::value_type;
+   static constexpr size_t m_delete_entries_size = 256;
+   std::vector<std::pair<key_type, value_type>> m_delete_entries;
+
+   EraseFixture() { }
+
+
+   virtual std::vector<celero::TestFixture::ExperimentValue> getExperimentValues() const override {
+      return TableFixture::getExperimentValues();
+   }
+
+   virtual void setUp(const celero::TestFixture::ExperimentValue& experimentValue) override {
+      TableFixture::setUp(experimentValue.Value);
+      m_delete_entries.clear();
+      m_delete_entries.reserve(m_delete_entries_size);
+      size_t el = 0;
+      for(auto it = static_fixture.m_map->begin(); it != static_fixture.m_map->end(); ++it) {
+	 if(el % (static_fixture.m_map->size() / m_delete_entries_size) == 0) {
+	    m_delete_entries.push_back(std::make_pair(it->first, it->second));
+	 }
+      }
+      
+   }
+
+   template<class T>
+   void reinsert_elements(T& table) {
+      for(auto p : m_delete_entries) {
+	 table[p.first] = p.second;
+      }
+   }
+
+   virtual void tearDown() override {
+      reinsert_elements(*static_fixture.m_ordered);
+      reinsert_elements(*static_fixture.m_plain);
+      reinsert_elements(*static_fixture.m_plain_arb);
+      reinsert_elements(*static_fixture.m_avx);
+      reinsert_elements(*static_fixture.m_avx_arb);
+      reinsert_elements(*static_fixture.m_compact);
+      reinsert_elements(*static_fixture.m_compact_arb);
+      reinsert_elements(*static_fixture.m_compact_chain);
+// #ifdef USE_BONSAI_TABLES
+//       reinsert_elements(*static_fixture.m_clearyP);
+//       reinsert_elements(*static_fixture.m_eliasP);
+//       reinsert_elements(*static_fixture.m_layeredP);
+//       reinsert_elements(*static_fixture.m_clearyS);
+//       reinsert_elements(*static_fixture.m_eliasS);
+//       reinsert_elements(*static_fixture.m_layeredS);
+// #endif//USE_BONSAI_TABLES
+      reinsert_elements(*static_fixture.m_google);
+      reinsert_elements(*static_fixture.m_rigtorp);
+      reinsert_elements(*static_fixture.m_tsl);
+   }
+
+
+};
+
+BASELINE_F(erase, std, EraseFixture, 0, 100)
+{
+   auto& map = *(static_fixture.m_ordered);
+   for(auto el : this->m_delete_entries) { celero::DoNotOptimizeAway(map.erase(el.first)); }
+}
+
+
+#define BENCH_ERASE(name,instance) \
+      BENCHMARK_F(erase, name, EraseFixture, 0, 100) { \
+	 auto& map = *(static_fixture.instance);\
+	 for(auto el : this->m_delete_entries) { celero::DoNotOptimizeAway(map.erase(el.first)); }}
+
+
+BENCH_ERASE(plainI, m_plain)
+BENCH_ERASE(plainD, m_plain_arb)
+BENCH_ERASE(avxI, m_avx)
+BENCH_ERASE(avxD, m_avx_arb)
+BENCH_ERASE(chtI, m_compact)
+BENCH_ERASE(chtD, m_compact_arb)
+BENCH_ERASE(chmap, m_compact_chain)
+// #ifdef USE_BONSAI_TABLES
+// BENCH_ERASE(clearyP, m_clearyP)
+// BENCH_ERASE(eliasP, m_eliasP)
+// BENCH_ERASE(layeredP, m_layeredP)
+// BENCH_ERASE(clearyS, m_clearyS)
+// BENCH_ERASE(eliasS, m_eliasS)
+// BENCH_ERASE(layeredS, m_layeredS)
+// #endif//USE_BONSAI_TABLES
+BENCH_ERASE(google, m_google)
+BENCH_ERASE(rigtorp, m_rigtorp)
+BENCH_ERASE(tsl, m_tsl)
+

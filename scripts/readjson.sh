@@ -12,6 +12,9 @@ entries=$(jq '.["sub"] | length' "$1")
 for entryid in $(seq 0 $entries); do
 	entry=$(jq ".[\"sub\"][$entryid]" "$1")
 	experiment=$(echo "$entry" | jq ".[\"title\"]")
-	printPhase "$(jq ".[\"sub\"][$entryid][\"sub\"][0]" "$1")" "$experiment"
-	printPhase "$(jq ".[\"sub\"][$entryid][\"sub\"][1]" "$1")" "$experiment"
+	phases=$(jq ".[\"sub\"][$entryid][\"sub\"] | length" "$1")
+	((--phases))
+	for phase in $(seq 0 $phases); do 
+		printPhase "$(jq ".[\"sub\"][$entryid][\"sub\"][$phase]" "$1")" "$experiment"
+	done
 done
