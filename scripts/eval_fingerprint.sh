@@ -14,7 +14,7 @@ cd "$lpwd"
 
 jsonfile=$(mktemp)
 for dataset in ~/data/trie/*; do
-	../build/bloomfilter "$dataset" "$dataset" > "$jsonfile"
+	../build/fingerprint "$dataset" "$dataset" > "$jsonfile"
 	./readjson.sh "$jsonfile" |
 		while read -r line; do
 			echo "$line filename=$(basename $dataset)"
