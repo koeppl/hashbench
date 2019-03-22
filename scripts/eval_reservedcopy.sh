@@ -9,7 +9,7 @@ jsonfile=$(mktemp)
 
 while [[ $size -le 268435456 ]]; do
 	set -x
-	../build/randomcopy "$size" > "$jsonfile"
+	../build/reservecopy "$size" > "$jsonfile"
 	set +x
 	./readjson.sh "$jsonfile" |
 		while read -r line; do
