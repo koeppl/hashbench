@@ -61,7 +61,7 @@ class CopyExperiment {
 		  filter.reserve(1ULL << (KEY_BITSIZE - 16));
 	       }
 	       for(auto el : m_map) {
-		  filter[el.first] = el.second;
+		  filter[el.first] = (el.second + 1);
 	       }
 	    }
 	    if constexpr (has_print_stats_fn<T>::value) {
@@ -71,8 +71,8 @@ class CopyExperiment {
 	    {
 	       tdc::StatPhase v2("query");
 	       for(auto el : m_map) {
-		  if(filter[el.first] != el.second) {
-		     std::cerr << "Element " << el.first << " -> " << el.second << " not found in table " << demangled_type(T) << std::endl;
+		  if(filter[el.first] != (el.second + 1)) {
+		     std::cerr << "Element " << el.first << " -> " << (el.second + 1) << " not found in table " << demangled_type(T) << std::endl;
 		     if (exit_on_error) std::exit(1);
 		  }
 	       }
