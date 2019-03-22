@@ -14,7 +14,7 @@ template <typename T>
 struct has_reserve_fn<T, std::void_t<decltype(std::declval<T>().reserve(std::declval<size_t>()  ))>> : std::true_type
 {};
 
-
+constexpr bool exit_on_error = false;
 
 class CopyExperiment {
    public:
@@ -73,6 +73,7 @@ class CopyExperiment {
 	       for(auto el : m_map) {
 		  if(filter[el.first] != el.second) {
 		     std::cerr << "Element " << el.first << " -> " << el.second << " not found in table " << demangled_type(T) << std::endl;
+		     if (exit_on_error) std::exit(1);
 		  }
 	       }
 	    }

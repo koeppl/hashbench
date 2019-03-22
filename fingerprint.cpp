@@ -6,6 +6,7 @@
 #include "experiment_base.hpp"
 using namespace std;
 
+constexpr bool exit_on_error = false;
 
 template<class hashmap>
 void fingerprint_test(istream& keyword_stream, istream& query_stream, hashmap& filter) {
@@ -23,6 +24,7 @@ void fingerprint_test(istream& keyword_stream, istream& query_stream, hashmap& f
 			MurmurHash3_x64_128(line.data(), line.length(), seed, arr);
 			if(filter.find(arr[0]) != filter.end()) { // && filter1.find(arr[1]) != filter1.end()) {
 			   std::cerr << "Key of element " << arr[0] << " -> " << elements << " already present with value " << filter[arr[0]] << " in table " << demangled_type(hashmap) << std::endl;
+			   if (exit_on_error) std::exit(1);
 			}
 			filter[arr[0]] = elements;
 			//filter1.insert(arr[1]);
@@ -46,6 +48,7 @@ void fingerprint_test(istream& keyword_stream, istream& query_stream, hashmap& f
 			MurmurHash3_x64_128(line.data(), line.length(), seed, arr);
 			if(filter.find(arr[0]) == filter.end()) { //|| filter1.find(arr[1]) == filter1.end()) {
 			   std::cerr << "Key " << arr[0] << " should be present, but is absent in table " << demangled_type(hashmap) << std::endl;
+			   if (exit_on_error) std::exit(1);
 			}
 		}
 		clock_t end = clock();

@@ -5,7 +5,7 @@ T random_int(const T& maxvalue) {
    return static_cast<T>(std::rand() * (1.0 / (RAND_MAX + 1.0 )) * maxvalue);
 }
 
-
+constexpr bool exit_on_error = false;
 
 class CopyExperiment {
    public:
@@ -57,6 +57,7 @@ class CopyExperiment {
 	       for(auto el : m_map) {
 		  if(filter[el.first] != el.second) {
 		     std::cerr << "Element " << el.first << " -> " << el.second << " not found in table " << demangled_type(T) << std::endl;
+		     if (exit_on_error) std::exit(1);
 		  }
 	       }
 	    }
