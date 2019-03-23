@@ -46,8 +46,10 @@ class Fixture {
    using unordered_type = std::unordered_map<key_type                      , value_type   , SplitMix>;
    using plain_arb_type     = separate_chaining_map<plain_bucket<key_type> , plain_bucket<value_type>  , hash_mapping_adapter<key_type , SplitMix>, arbitrary_resize>;
    using plain_type     = separate_chaining_map<plain_bucket<key_type> , plain_bucket<value_type>  , hash_mapping_adapter<key_type , SplitMix>>;
+#ifdef __AXV2__
    using avx2_type      = separate_chaining_map<avx2_bucket<key_type>  , plain_bucket<value_type>  , hash_mapping_adapter<key_type , SplitMix>, incremental_resize>;
    using avx2_arb_type      = separate_chaining_map<avx2_bucket<key_type>  , plain_bucket<value_type>  , hash_mapping_adapter<key_type , SplitMix>, arbitrary_resize>;
+#endif//__AXV2__
    using compact_type   = separate_chaining_map<varwidth_bucket<>        , plain_bucket<value_type>  , xorshift_hash<>, incremental_resize>;
    using compact_arb_type   = separate_chaining_map<varwidth_bucket<>        , plain_bucket<value_type>  , xorshift_hash<>, arbitrary_resize>;
    using compact_chain_type   = compact_chaining_map<xorshift_hash<> >;
@@ -63,7 +65,9 @@ class Fixture {
 #ifdef USE_BUCKET_TABLES
    using bucket_type   = bucket_table<varwidth_bucket<>        , plain_bucket<value_type>, incremental_resize>;
    using bucket_arb_type   = bucket_table<varwidth_bucket<>        , plain_bucket<value_type>, arbitrary_resize_bucket>;
-   using bucket_avx2_type   = bucket_table<varwidth_bucket<>        , plain_bucket<value_type>, incremental_resize>;
+#ifdef __AXV2__
+using bucket_avx2_type   = bucket_table<varwidth_bucket<>        , plain_bucket<value_type>, incremental_resize>;
+#endif //__AVX2__
 #endif//USE_BUCKET_TABLES
 
    static constexpr size_t m_missed_els_size = 256;
@@ -72,8 +76,10 @@ class Fixture {
    unordered_type* m_ordered = nullptr;
    plain_type* m_plain = nullptr;
    plain_arb_type* m_plain_arb = nullptr;
-   avx2_type* m_avx = nullptr;
-   avx2_arb_type* m_avx_arb = nullptr;
+#ifdef __AXV2__
+avx2_type* m_avx = nullptr;
+avx2_arb_type* m_avx_arb = nullptr;
+#endif //__AXV2__
    compact_type* m_compact = nullptr;
    compact_arb_type* m_compact_arb = nullptr;
    compact_chain_type *m_compact_chain = nullptr;
@@ -94,7 +100,9 @@ class Fixture {
 #ifdef USE_BUCKET_TABLES
    bucket_type* m_bucket = nullptr;
    bucket_arb_type* m_bucket_arb = nullptr;
-   bucket_avx2_type* m_bucket_avx2 = nullptr;
+#ifdef __AXV2__
+bucket_avx2_type* m_bucket_avx2 = nullptr;
+#endif //__AXV2__
 #endif//USE_BUCKET_TABLES
 
    size_t m_current_instance = 0;
@@ -109,8 +117,10 @@ class Fixture {
       m_ordered = new unordered_type();
       m_plain = new plain_type();
       m_plain_arb = new plain_arb_type();
+#ifdef __AXV2__
       m_avx = new avx2_type();
       m_avx_arb = new avx2_arb_type();
+#endif //__AXV2__
       m_compact = new compact_type(NUM_RANGE);
       m_compact_arb = new compact_arb_type(NUM_RANGE);
       m_compact_chain = new compact_chain_type(NUM_RANGE, sizeof(value_type)*8);
@@ -130,7 +140,9 @@ class Fixture {
 #ifdef USE_BUCKET_TABLES
       m_bucket = new bucket_type(NUM_RANGE);
       m_bucket_arb = new bucket_arb_type(NUM_RANGE);
-      m_bucket_avx2 = new bucket_avx2_type(NUM_RANGE);
+#ifdef __AXV2__
+m_bucket_avx2 = new bucket_avx2_type(NUM_RANGE);
+#endif //__AXV2__
 #endif//USE_BUCKET_TABLES
 
       for(size_t val = 0; val < m_current_instance;) {
@@ -150,8 +162,10 @@ class Fixture {
 	 (*m_ordered)[el.first] = el.second;
 	 (*m_plain)[el.first] = el.second;
 	 (*m_plain_arb)[el.first] = el.second;
-	 (*m_avx)[el.first] = el.second;
-	 (*m_avx_arb)[el.first] = el.second;
+#ifdef __AXV2__
+(*m_avx)[el.first] = el.second;
+(*m_avx_arb)[el.first] = el.second;
+#endif //__AXV2__
 	 (*m_compact)[el.first] = el.second;
 	 (*m_compact_arb)[el.first] = el.second;
 	 (*m_compact_chain)[el.first] = el.second;
@@ -170,14 +184,18 @@ class Fixture {
 #ifdef USE_BUCKET_TABLES
       (*m_bucket)[el.first]      = el.second;
       (*m_bucket_arb)[el.first]  = el.second;
-      (*m_bucket_avx2)[el.first] = el.second;
+#ifdef __AXV2__
+(*m_bucket_avx2)[el.first] = el.second;
+#endif //__AXV2__
 #endif//USE_BUCKET_TABLES
 
 	 DCHECK_EQ((*m_ordered)[el.first], el.second);
 	 DCHECK_EQ((*m_plain)[el.first], el.second);
 	 DCHECK_EQ((*m_plain_arb)[el.first], el.second);
-	 DCHECK_EQ((*m_avx)[el.first], el.second);
-	 DCHECK_EQ((*m_avx_arb)[el.first], el.second);
+#ifdef __AXV2__
+DCHECK_EQ((*m_avx)[el.first], el.second);
+DCHECK_EQ((*m_avx_arb)[el.first], el.second);
+#endif //__AXV2__
 	 DCHECK_EQ((*m_compact)[el.first], el.second);
 	 DCHECK_EQ((*m_compact_arb)[el.first], el.second);
 	 DCHECK_EQ((*m_compact_chain)[el.first], el.second);
@@ -196,14 +214,18 @@ class Fixture {
 #ifdef USE_BUCKET_TABLES
       DCHECK_EQ((*m_bucket)[el.first]      , el.second);
       DCHECK_EQ((*m_bucket_arb)[el.first]  , el.second);
-      DCHECK_EQ((*m_bucket_avx2)[el.first] , el.second);
+#ifdef __AXV2__
+DCHECK_EQ((*m_bucket_avx2)[el.first] , el.second);
+#endif //__AXV2__
 #endif//USE_BUCKET_TABLES
 
       }
       DCHECK_EQ(m_ordered->size(), m_map->size());
       DCHECK_EQ(m_plain_arb->size(), m_ordered->size());
-      DCHECK_EQ(m_avx->size(), m_ordered->size());
-      DCHECK_EQ(m_avx_arb->size(), m_ordered->size());
+#ifdef __AXV2__
+DCHECK_EQ(m_avx->size(), m_ordered->size());
+DCHECK_EQ(m_avx_arb->size(), m_ordered->size());
+#endif //__AXV2__
       DCHECK_EQ(m_compact->size(), m_ordered->size());
       DCHECK_EQ(m_compact_arb->size(), m_ordered->size());
       DCHECK_EQ(m_compact_chain->size(), m_ordered->size());
@@ -222,7 +244,9 @@ class Fixture {
 #ifdef USE_BUCKET_TABLES
       DCHECK_EQ((m_bucket)     ->size() , m_ordered->size());
       DCHECK_EQ((m_bucket_arb) ->size() , m_ordered->size());
-      DCHECK_EQ((m_bucket_avx2)->size() , m_ordered->size());
+#ifdef __AXV2__
+DCHECK_EQ((m_bucket_avx2)->size() , m_ordered->size());
+#endif //__AXV2__
 #endif//USE_BUCKET_TABLES
    }
    void tearDown() {
@@ -231,8 +255,10 @@ class Fixture {
 	 delete m_ordered;
 	 delete m_plain;
 	 delete m_plain_arb;
-	 delete m_avx;
-	 delete m_avx_arb;
+#ifdef __AXV2__
+delete m_avx;
+delete m_avx_arb;
+#endif //__AXV2__
 	 delete m_compact;
 	 delete m_compact_arb;
 	 delete m_compact_chain;
@@ -247,7 +273,9 @@ class Fixture {
 #ifdef USE_BUCKET_TABLES
 	 delete m_bucket;
 	 delete m_bucket_arb; 
-	 delete m_bucket_avx2;
+#ifdef __AXV2__
+delete m_bucket_avx2;
+#endif //__AXV2__
 #endif//USE_BUCKET_TABLES
       }
       m_map = nullptr;
@@ -341,6 +369,7 @@ BENCHMARK_F(query, plainD, TableFixture, 0, 100)
       celero::DoNotOptimizeAway(plain_arb.find(el.first));
    }
 }
+#ifdef __AXV2__
 BENCHMARK_F(query, avxI, TableFixture, 0, 100)
 {
    const auto& avx = *(static_fixture.m_avx);
@@ -355,6 +384,7 @@ BENCHMARK_F(query, avxD, TableFixture, 0, 100)
       celero::DoNotOptimizeAway(avx.find(el.first));
    }
 }
+#endif //__AXV2__
 
 BENCHMARK_F(query, chtI, TableFixture, 0, 100)
 {
@@ -460,6 +490,7 @@ BENCHMARK_F(query, bucket_arb, TableFixture, 0, 100)
       celero::DoNotOptimizeAway(bucket_arb.find(el.first));
    }
 }
+#ifdef __AXV2__
 BENCHMARK_F(query, bucket_avx2, TableFixture, 0, 100)
 {
    const auto& bucket_avx2 = *(static_fixture.m_bucket_avx2);
@@ -467,6 +498,7 @@ BENCHMARK_F(query, bucket_avx2, TableFixture, 0, 100)
       celero::DoNotOptimizeAway(bucket_avx2.find(el.first));
    }
 }
+#endif //__AXV2__
 #endif//USE_BUCKET_TABLES
 
 #define BENCH_INSERT(name,cons) \
@@ -485,8 +517,10 @@ BASELINE_F(insert, std, TableFixture, 0, 100)
 }
 BENCH_INSERT(plainI, plain_type())
 BENCH_INSERT(plainD, plain_arb_type())
+#ifdef __AXV2__
 BENCH_INSERT(avxI, avx2_type())
 BENCH_INSERT(avxD, avx2_arb_type())
+#endif //__AXV2__
 BENCH_INSERT(chtI, compact_type(Fixture::NUM_RANGE))
 BENCH_INSERT(chtD, compact_arb_type(Fixture::NUM_RANGE))
 BENCH_INSERT(chmap, compact_chain_type(Fixture::NUM_RANGE, sizeof(Fixture::value_type)*8))
@@ -501,7 +535,9 @@ BENCH_INSERT(layeredS, layeredS_type())
 #ifdef USE_BUCKET_TABLES
 BENCH_INSERT(bucket, bucket_type())
 BENCH_INSERT(bucket_arb, bucket_arb_type())
+#ifdef __AXV2__
 BENCH_INSERT(bucket_avx2, bucket_avx2_type())
+#endif //__AXV2__
 #endif//USE_BUCKET_TABLES
 BENCH_INSERT(google, google_type())
 BENCH_INSERT(rigtorp, rigtorp_type(0, static_cast<Fixture::key_type>(-1ULL)))
@@ -523,8 +559,10 @@ BASELINE_F(miss, std, TableFixture, 0, 100)
 
 BENCH_MISS(plainI, m_plain)
 BENCH_MISS(plainD, m_plain_arb)
+#ifdef __AXV2__
 BENCH_MISS(avxI, m_avx)
 BENCH_MISS(avxD, m_avx_arb)
+#endif //__AXV2__
 BENCH_MISS(chtI, m_compact)
 BENCH_MISS(chtD, m_compact_arb)
 BENCH_MISS(chmap, m_compact_chain)
@@ -580,8 +618,10 @@ class EraseFixture : public TableFixture {
       reinsert_elements(*static_fixture.m_ordered);
       reinsert_elements(*static_fixture.m_plain);
       reinsert_elements(*static_fixture.m_plain_arb);
-      reinsert_elements(*static_fixture.m_avx);
-      reinsert_elements(*static_fixture.m_avx_arb);
+#ifdef __AXV2__
+reinsert_elements(*static_fixture.m_avx);
+reinsert_elements(*static_fixture.m_avx_arb);
+#endif //__AXV2__
       reinsert_elements(*static_fixture.m_compact);
       reinsert_elements(*static_fixture.m_compact_arb);
       reinsert_elements(*static_fixture.m_compact_chain);
@@ -616,8 +656,10 @@ BASELINE_F(erase, std, EraseFixture, 0, 100)
 
 BENCH_ERASE(plainI, m_plain)
 BENCH_ERASE(plainD, m_plain_arb)
+#ifdef __AXV2__
 BENCH_ERASE(avxI, m_avx)
 BENCH_ERASE(avxD, m_avx_arb)
+#endif //__AXV2__
 BENCH_ERASE(chtI, m_compact)
 BENCH_ERASE(chtD, m_compact_arb)
 BENCH_ERASE(chmap, m_compact_chain)

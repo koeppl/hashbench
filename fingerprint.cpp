@@ -13,7 +13,7 @@ void fingerprint_test(istream& keyword_stream, istream& query_stream, hashmap& f
 	//std::unordered_map<uint64_t,uint64_t> filter;
 	//std::unordered_set<uint64_t> filter1;
 
-	size_t elements = 0;
+	size_t elements = 1;
 	{
 		tdc::StatPhase v("insert");
 		std::string line;
