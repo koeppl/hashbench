@@ -14,7 +14,7 @@ template <typename T>
 struct has_reserve_fn<T, std::void_t<decltype(std::declval<T>().reserve(std::declval<size_t>()  ))>> : std::true_type
 {};
 
-
+constexpr bool exit_on_error = false;
 
 class CopyExperiment {
    public:
@@ -28,7 +28,7 @@ class CopyExperiment {
 
    private:
       using map_type = std::unordered_map<key_type, value_type>;
-      
+
       map_type m_map;
 
       const char*const m_caption;
@@ -40,7 +40,7 @@ class CopyExperiment {
       }
       const char* caption() const { return m_caption; }
 
-      CopyExperiment(const char*const caption, const size_t num_elements) 
+      CopyExperiment(const char*const caption, const size_t num_elements)
 	 : NUM_ELEMENTS(num_elements)
 	 , KEY_BITSIZE(tdc::bits_for(NUM_ELEMENTS) + 8)
 	 , m_caption(caption) {
@@ -61,7 +61,7 @@ class CopyExperiment {
 		  filter.reserve(1ULL << (KEY_BITSIZE - 16));
 	       }
 	       for(auto el : m_map) {
-		  filter[el.first] = el.second;
+		  filter[el.first] = (el.second + 1);
 	       }
 	    }
 	    if constexpr (has_print_stats_fn<T>::value) {
@@ -71,8 +71,9 @@ class CopyExperiment {
 	    {
 	       tdc::StatPhase v2("query");
 	       for(auto el : m_map) {
-		  if(filter[el.first] != el.second) {
-		     std::cerr << "Element " << el.first << " -> " << el.second << " not found in table " << typeid(T).name() << std::endl;
+		  if(filter[el.first] != (el.second + 1)) {
+		     std::cerr << "Element " << el.first << " -> " << (el.second + 1) << " not found in table " << demangled_type(T) << std::endl;
+		     if (exit_on_error) std::exit(1);
 		  }
 	       }
 	    }
@@ -113,6 +114,8 @@ class CopyExperiment {
 };
 
 int main(int argc, char** argv) {
+   ::google::InitGoogleLogging(argv[0]);
+
    if(argc != 2) {
       std::cerr << "Usage: " << argv[0] << " problem-size" << std::endl;
       return 1;

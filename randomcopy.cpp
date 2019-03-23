@@ -5,7 +5,7 @@ T random_int(const T& maxvalue) {
    return static_cast<T>(std::rand() * (1.0 / (RAND_MAX + 1.0 )) * maxvalue);
 }
 
-
+constexpr bool exit_on_error = false;
 
 class CopyExperiment {
    public:
@@ -19,7 +19,7 @@ class CopyExperiment {
 
    private:
       using map_type = std::unordered_map<key_type, value_type>;
-      
+
       map_type m_map;
 
       const char*const m_caption;
@@ -45,7 +45,7 @@ class CopyExperiment {
 	    {
 	       tdc::StatPhase v2("insert");
 	       for(auto el : m_map) {
-		  filter[el.first] = el.second;
+		  filter[el.first] = el.second + 1;
 	       }
 	    }
 	    if constexpr (has_print_stats_fn<T>::value) {
@@ -55,8 +55,9 @@ class CopyExperiment {
 	    {
 	       tdc::StatPhase v2("query");
 	       for(auto el : m_map) {
-		  if(filter[el.first] != el.second) {
-		     std::cerr << "Element " << el.first << " -> " << el.second << " not found in table " << typeid(T).name() << std::endl;
+		  if(filter[el.first] != (el.second + 1)) {
+		     std::cerr << "Element " << el.first << " -> " << (el.second + 1) << " not found in table " << demangled_type(T) << std::endl;
+		     if (exit_on_error) std::exit(1);
 		  }
 	       }
 	    }
@@ -97,6 +98,8 @@ class CopyExperiment {
 };
 
 int main(int argc, char** argv) {
+   ::google::InitGoogleLogging(argv[0]);
+
    if(argc != 2) {
       std::cerr << "Usage: " << argv[0] << " problem-size" << std::endl;
       return 1;

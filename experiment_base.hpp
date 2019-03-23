@@ -14,6 +14,8 @@ using namespace nlohmann;
 
 #include <tudocomp/util/compact_hash/map/typedefs.hpp>
 
+#include "demangled_type.hpp"
+
 template<class experiment_t>
 void run_experiments(experiment_t& ex) {
       using namespace separate_chaining;
