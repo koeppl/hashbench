@@ -14,6 +14,7 @@ using namespace nlohmann;
 
 #include <tudocomp/util/compact_hash/map/typedefs.hpp>
 
+#include <sparsepp/spp.h>
 #include "demangled_type.hpp"
 
 template<class experiment_t>
@@ -139,6 +140,10 @@ void run_experiments(experiment_t& ex) {
       {
 	 std::unordered_map<key_type,value_type> filter;
 	 ex.execute("std", filter);
+      }
+      {
+	  spp::sparse_hash_map<key_type,value_type> filter;
+	  ex.execute("spp", filter);
       }
       std::cout << root.to_json().dump(4) << "\n";
 }

@@ -21,6 +21,8 @@
 #include <separate/bucket_table.hpp>
 #endif
 
+#include <sparsepp/spp.h>
+
 using namespace separate_chaining;
 
 CELERO_MAIN
@@ -40,6 +42,7 @@ class Fixture {
 
    using rigtorp_type = rigtorp::HashMap<key_type,value_type>;
    using google_type = google::sparse_hash_map<key_type,value_type>;
+   using spp_type = spp::sparse_hash_map<key_type,value_type>;
    using tsl_type = tsl::sparse_map<key_type,value_type>;
 
    using map_type       = std::map<key_type                                , value_type>;
@@ -86,6 +89,7 @@ avx2_arb_type* m_avx_arb = nullptr;
 
    rigtorp_type* m_rigtorp = nullptr;
    google_type* m_google = nullptr;
+   spp_type* m_spp = nullptr;
    tsl_type* m_tsl = nullptr;
 
 #ifdef USE_BONSAI_TABLES
@@ -126,6 +130,7 @@ bucket_avx2_type* m_bucket_avx2 = nullptr;
       m_compact_chain = new compact_chain_type(NUM_RANGE, sizeof(value_type)*8);
       m_rigtorp = new rigtorp_type(0, static_cast<key_type>(-1ULL));
       m_google = new google_type();
+      m_spp = new spp_type();
       m_tsl = new tsl_type();
 
 #ifdef USE_BONSAI_TABLES
@@ -170,6 +175,7 @@ m_bucket_avx2 = new bucket_avx2_type(NUM_RANGE);
 	 (*m_compact_arb)[el.first] = el.second;
 	 (*m_compact_chain)[el.first] = el.second;
 	 (*m_google)[el.first] = el.second;
+	 (*m_spp)[el.first] = el.second;
 	 (*m_rigtorp)[el.first] = el.second;
 	 (*m_tsl)[el.first] = el.second;
 
@@ -200,6 +206,7 @@ DCHECK_EQ((*m_avx_arb)[el.first], el.second);
 	 DCHECK_EQ((*m_compact_arb)[el.first], el.second);
 	 DCHECK_EQ((*m_compact_chain)[el.first], el.second);
 	 DCHECK_EQ((*m_google)[el.first], el.second);
+	 DCHECK_EQ((*m_spp)[el.first], el.second);
 	 DCHECK_EQ((*m_rigtorp)[el.first], el.second);
 	 DCHECK_EQ((*m_tsl)[el.first], el.second);
 
@@ -230,6 +237,7 @@ DCHECK_EQ(m_avx_arb->size(), m_ordered->size());
       DCHECK_EQ(m_compact_arb->size(), m_ordered->size());
       DCHECK_EQ(m_compact_chain->size(), m_ordered->size());
       DCHECK_EQ(m_google->size(), m_ordered->size());
+      DCHECK_EQ(m_spp->size(), m_ordered->size());
       DCHECK_EQ(m_rigtorp->size(), m_ordered->size());
       DCHECK_EQ(m_tsl->size(), m_ordered->size());
 
@@ -421,6 +429,13 @@ BENCHMARK_F(query, google, TableFixture, 0, 100)
       celero::DoNotOptimizeAway(mappe.find(el.first));
    }
 }
+BENCHMARK_F(query, spp, TableFixture, 0, 100)
+{
+   const auto& mappe = *(static_fixture.m_spp);
+   for(auto el : *static_fixture.m_map) {
+      celero::DoNotOptimizeAway(mappe.find(el.first));
+   }
+}
 BENCHMARK_F(query, tsl, TableFixture, 0, 100)
 {
    const auto& mappe = *(static_fixture.m_tsl);
@@ -540,6 +555,7 @@ BENCH_INSERT(bucket_avx2, bucket_avx2_type())
 #endif //__AXV2__
 #endif//USE_BUCKET_TABLES
 BENCH_INSERT(google, google_type())
+BENCH_INSERT(spp, spp_type())
 BENCH_INSERT(rigtorp, rigtorp_type(0, static_cast<Fixture::key_type>(-1ULL)))
 BENCH_INSERT(tsl, tsl_type())
 
@@ -575,6 +591,7 @@ BENCH_MISS(eliasS, m_eliasS)
 BENCH_MISS(layeredS, m_layeredS)
 #endif//USE_BONSAI_TABLES
 BENCH_MISS(google, m_google)
+BENCH_MISS(spp, m_spp)
 BENCH_MISS(rigtorp, m_rigtorp)
 BENCH_MISS(tsl, m_tsl)
 
@@ -633,6 +650,7 @@ reinsert_elements(*static_fixture.m_avx_arb);
 //       reinsert_elements(*static_fixture.m_eliasS);
 //       reinsert_elements(*static_fixture.m_layeredS);
 // #endif//USE_BONSAI_TABLES
+      reinsert_elements(*static_fixture.m_spp);
       reinsert_elements(*static_fixture.m_google);
       reinsert_elements(*static_fixture.m_rigtorp);
       reinsert_elements(*static_fixture.m_tsl);
@@ -672,6 +690,7 @@ BENCH_ERASE(chmap, m_compact_chain)
 // BENCH_ERASE(layeredS, m_layeredS)
 // #endif//USE_BONSAI_TABLES
 BENCH_ERASE(google, m_google)
+BENCH_ERASE(spp, m_spp)
 BENCH_ERASE(rigtorp, m_rigtorp)
 BENCH_ERASE(tsl, m_tsl)
 

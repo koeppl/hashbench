@@ -22,3 +22,6 @@
 [submodule "external/separate_chaining"]
 	path = external/separate_chaining
 	url = https://github.com/koeppl/separate_chaining
+[submodule "external/sparsepp"]
+	path = external/sparsepp
+	url = https://github.com/greg7mdp/sparsepp
