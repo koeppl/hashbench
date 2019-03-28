@@ -35,10 +35,9 @@ void run_experiments(experiment_t& ex) {
 
     ex.baseline();
 
-    // TODO: register function in a list instead, and make a sub-list from
-    // it selectable per CLI flag
+    std::vector<std::function<void()>> bench_cases;
     auto regist = [&] (auto run_function) {
-        run_function();
+        bench_cases.push_back(run_function);
     };
 
     regist([&] {
@@ -178,6 +177,11 @@ void run_experiments(experiment_t& ex) {
         spp::sparse_hash_map<key_type,value_type> filter;
         ex.execute("spp", filter);
     });
+
+    // TODO: make algorithmens selectable per CLI flag
+    for (auto& bench_case : bench_cases) {
+        bench_case();
+    }
     std::cout << root.to_json().dump(4) << "\n";
 }
 
