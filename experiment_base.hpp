@@ -97,30 +97,61 @@ void run_experiments(experiment_t& ex) {
 
 
 #ifdef USE_BONSAI_TABLES
-      {//TODO: this implementation forgets hashed entries in the fingerprint test with the `cc` dataset
-         tdc::compact_hash::map::sparse_elias_hashmap_t<value_type> filter(0,ex.KEY_BITSIZE);
+      {
+         using filter_t = tdc::compact_hash::map::sparse_elias_hashmap_t<value_type>;
+         typename filter_t::config_args config;
+         // config.size_manager_config.load_factor = ;
+         // config.storage_config = ;
+         // config.displacement_config.table_config.bucket_size_config.bucket_size = ;
+
+         filter_t filter(0,ex.KEY_BITSIZE,filter_t::DEFAULT_VALUE_WIDTH,config);
          ex.execute("eliasS", filter);
       }
       {
-         tdc::compact_hash::map::sparse_cv_hashmap_t<value_type> filter(0,ex.KEY_BITSIZE);
+         using filter_t = tdc::compact_hash::map::sparse_cv_hashmap_t<value_type>;
+         typename filter_t::config_args config;
+         // config.size_manager_config.load_factor = ;
+
+         filter_t filter(0,ex.KEY_BITSIZE,filter_t::DEFAULT_VALUE_WIDTH,config);
          ex.execute("clearyS", filter);
       }
       {
-         tdc::compact_hash::map::sparse_layered_hashmap_t<value_type> filter(0,ex.KEY_BITSIZE);
+         using filter_t = tdc::compact_hash::map::sparse_layered_hashmap_t<value_type>;
+         typename filter_t::config_args config;
+         // config.size_manager_config.load_factor = ;
+
+         filter_t filter(0,ex.KEY_BITSIZE,filter_t::DEFAULT_VALUE_WIDTH,config);
          ex.execute("layeredS", filter);
       }
       {
-         tdc::compact_hash::map::plain_elias_hashmap_t<value_type> filter(0,ex.KEY_BITSIZE);
+         using filter_t = tdc::compact_hash::map::plain_elias_hashmap_t<value_type>;
+         typename filter_t::config_args config;
+         // config.size_manager_config.load_factor = ;
+         // config.storage_config.empty_value = ;
+         // config.displacement_config.table_config.bucket_size_config.bucket_size = ;
+
+        filter_t filter(0,ex.KEY_BITSIZE,filter_t::DEFAULT_VALUE_WIDTH,config);
          ex.execute("eliasP", filter);
       }
-      {//TODO: this implementation causes an infinite loop in the fingerprint test with the `cc` dataset
-         tdc::compact_hash::map::plain_cv_hashmap_t<value_type> filter(0,ex.KEY_BITSIZE);
+      {
+         using filter_t = tdc::compact_hash::map::plain_cv_hashmap_t<value_type>;
+         typename filter_t::config_args config;
+         // config.size_manager_config.load_factor = ;
+         // config.storage_config.empty_value = ;
+
+         filter_t filter(0,ex.KEY_BITSIZE,filter_t::DEFAULT_VALUE_WIDTH,config);
          ex.execute("clearyP", filter);
       }
       {
-         tdc::compact_hash::map::plain_layered_hashmap_t<value_type> filter(0,ex.KEY_BITSIZE);
+         using filter_t = tdc::compact_hash::map::plain_layered_hashmap_t<value_type>;
+         typename filter_t::config_args config;
+         // config.size_manager_config.load_factor = ;
+         // config.storage_config.empty_value = ;
+
+         filter_t filter(0,ex.KEY_BITSIZE,filter_t::DEFAULT_VALUE_WIDTH,config);
          ex.execute("layeredP", filter);
       }
+
 #endif//USE_BONSAI_TABLES
 
 
