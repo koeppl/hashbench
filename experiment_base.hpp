@@ -19,164 +19,166 @@ using namespace nlohmann;
 
 template<class experiment_t>
 void run_experiments(experiment_t& ex) {
-      using namespace separate_chaining;
-      using experiment_type = experiment_t;
+    using namespace separate_chaining;
+    using experiment_type = experiment_t;
 
-      using mock_key_type = typename experiment_type::mock_key_type;
-      using key_type = typename experiment_type::key_type;
-      using value_type = typename experiment_type::value_type;
+    using mock_key_type = typename experiment_type::mock_key_type;
+    using key_type = typename experiment_type::key_type;
+    using value_type = typename experiment_type::value_type;
 
 #ifdef STATS_DISABLED
-      std::cout << "stats disabled. " << std::endl;
+    std::cout << "stats disabled. " << std::endl;
 #endif
 
-      tdc::StatPhase root(ex.caption());
-      ex.init(root);
+    tdc::StatPhase root(ex.caption());
+    ex.init(root);
 
-      ex.baseline();
+    ex.baseline();
 
-      {
-	 compact_chaining_map<xorshift_hash<>, uint8_t> filter(ex.KEY_BITSIZE, sizeof(value_type)*8);
-	 ex.execute("chmap", filter);
-      }
-      // {
-	//  compact_chaining_map<xorshift_hash<>, uint64_t> filter(ex.KEY_BITSIZE, sizeof(value_type)*8);
-	//  ex.execute("chmap64", filter);
-      // }
-      {
-	 separate_chaining_map<varwidth_bucket<>, plain_bucket<value_type>, xorshift_hash<>> filter(ex.KEY_BITSIZE);
-	 ex.execute("chtI", filter);
-      }
-      {
-	 separate_chaining_map<varwidth_bucket<>, plain_bucket<value_type>, xorshift_hash<>, arbitrary_resize> filter(ex.KEY_BITSIZE);
-	 ex.execute("chtD", filter);
-      }
+    // TODO: register function in a list instead, and make a sub-list from
+    // it selectable per CLI flag
+    auto regist = [&] (auto run_function) {
+        run_function();
+    };
 
-      if constexpr(!std::is_same<mock_key_type, key_type>::value) {
-      {
-	 separate_chaining_map<plain_bucket<mock_key_type>, plain_bucket<value_type>  , xorshift_hash<key_type, mock_key_type> > filter(ex.KEY_BITSIZE);
-	 ex.execute("plainMI", filter);
-      }
-      {
-	 separate_chaining_map<plain_bucket<mock_key_type>, plain_bucket<value_type>  , xorshift_hash<key_type, mock_key_type>, arbitrary_resize> filter(ex.KEY_BITSIZE);
-	 ex.execute("plainMD", filter);
-      }
+    regist([&] {
+        compact_chaining_map<xorshift_hash<>, uint8_t> filter(ex.KEY_BITSIZE, sizeof(value_type)*8);
+        ex.execute("chmap", filter);
+    });
+    // regist([&] {
+    //     compact_chaining_map<xorshift_hash<>, uint64_t> filter(ex.KEY_BITSIZE, sizeof(value_type)*8);
+    //     ex.execute("chmap64", filter);
+    // });
+    regist([&] {
+        separate_chaining_map<varwidth_bucket<>, plain_bucket<value_type>, xorshift_hash<>> filter(ex.KEY_BITSIZE);
+        ex.execute("chtI", filter);
+    });
+    regist([&] {
+        separate_chaining_map<varwidth_bucket<>, plain_bucket<value_type>, xorshift_hash<>, arbitrary_resize> filter(ex.KEY_BITSIZE);
+        ex.execute("chtD", filter);
+    });
+
+    if constexpr(!std::is_same<mock_key_type, key_type>::value) {
+        regist([&] {
+            separate_chaining_map<plain_bucket<mock_key_type>, plain_bucket<value_type>  , xorshift_hash<key_type, mock_key_type> > filter(ex.KEY_BITSIZE);
+            ex.execute("plainMI", filter);
+        });
+        regist([&] {
+            separate_chaining_map<plain_bucket<mock_key_type>, plain_bucket<value_type>  , xorshift_hash<key_type, mock_key_type>, arbitrary_resize> filter(ex.KEY_BITSIZE);
+            ex.execute("plainMD", filter);
+        });
 
 #if defined(STATS_DISABLED) || defined(MALLOC_DISABLED)
-      {
-	 separate_chaining_map<avx2_bucket<mock_key_type>, plain_bucket<value_type>  , xorshift_hash<key_type, mock_key_type>, incremental_resize> filter(ex.KEY_BITSIZE);
-	 ex.execute("avxMI", filter);
-      }
-      {
-	 separate_chaining_map<avx2_bucket<mock_key_type>, plain_bucket<value_type>  , xorshift_hash<key_type, mock_key_type>, arbitrary_resize> filter(ex.KEY_BITSIZE);
-	 ex.execute("avxMD", filter);
-      }
+        regist([&] {
+            separate_chaining_map<avx2_bucket<mock_key_type>, plain_bucket<value_type>  , xorshift_hash<key_type, mock_key_type>, incremental_resize> filter(ex.KEY_BITSIZE);
+            ex.execute("avxMI", filter);
+        });
+        regist([&] {
+            separate_chaining_map<avx2_bucket<mock_key_type>, plain_bucket<value_type>  , xorshift_hash<key_type, mock_key_type>, arbitrary_resize> filter(ex.KEY_BITSIZE);
+            ex.execute("avxMD", filter);
+        });
 #endif
-      }//if constexpr
+    }//if constexpr
 
-
-      {
-	 separate_chaining_map<plain_bucket<key_type>, plain_bucket<value_type>  , hash_mapping_adapter<key_type , std::hash<key_type> >> filter;
-	 ex.execute("plainI", filter);
-      }
-      {
-	 separate_chaining_map<plain_bucket<key_type>, plain_bucket<value_type>  , hash_mapping_adapter<key_type , std::hash<key_type> >, arbitrary_resize> filter;
-	 ex.execute("plainD", filter);
-      }
+    regist([&] {
+        separate_chaining_map<plain_bucket<key_type>, plain_bucket<value_type>  , hash_mapping_adapter<key_type , std::hash<key_type> >> filter;
+        ex.execute("plainI", filter);
+    });
+    regist([&] {
+        separate_chaining_map<plain_bucket<key_type>, plain_bucket<value_type>  , hash_mapping_adapter<key_type , std::hash<key_type> >, arbitrary_resize> filter;
+        ex.execute("plainD", filter);
+    });
 
 #if defined(STATS_DISABLED) || defined(MALLOC_DISABLED)
-      {
-	 separate_chaining_map<avx2_bucket<key_type>, plain_bucket<value_type>  , hash_mapping_adapter<key_type , std::hash<key_type> >, incremental_resize> filter;
-	 ex.execute("avxI", filter);
-      }
-      {
-	 separate_chaining_map<avx2_bucket<key_type>, plain_bucket<value_type>  , hash_mapping_adapter<key_type , std::hash<key_type> >, arbitrary_resize> filter;
-	 ex.execute("avxD", filter);
-      }
+    regist([&] {
+        separate_chaining_map<avx2_bucket<key_type>, plain_bucket<value_type>  , hash_mapping_adapter<key_type , std::hash<key_type> >, incremental_resize> filter;
+        ex.execute("avxI", filter);
+    });
+    regist([&] {
+        separate_chaining_map<avx2_bucket<key_type>, plain_bucket<value_type>  , hash_mapping_adapter<key_type , std::hash<key_type> >, arbitrary_resize> filter;
+        ex.execute("avxD", filter);
+    });
 #endif
-
 
 #ifdef USE_BONSAI_TABLES
-      {
-         using filter_t = tdc::compact_hash::map::sparse_elias_hashmap_t<value_type>;
-         typename filter_t::config_args config;
-         // config.size_manager_config.load_factor = ;
-         // config.storage_config = ;
-         // config.displacement_config.table_config.bucket_size_config.bucket_size = ;
-
-         filter_t filter(0,ex.KEY_BITSIZE,filter_t::DEFAULT_VALUE_WIDTH,config);
-         ex.execute("eliasS", filter);
-      }
-      {
-         using filter_t = tdc::compact_hash::map::sparse_cv_hashmap_t<value_type>;
-         typename filter_t::config_args config;
-         // config.size_manager_config.load_factor = ;
-
-         filter_t filter(0,ex.KEY_BITSIZE,filter_t::DEFAULT_VALUE_WIDTH,config);
-         ex.execute("clearyS", filter);
-      }
-      {
-         using filter_t = tdc::compact_hash::map::sparse_layered_hashmap_t<value_type>;
-         typename filter_t::config_args config;
-         // config.size_manager_config.load_factor = ;
-
-         filter_t filter(0,ex.KEY_BITSIZE,filter_t::DEFAULT_VALUE_WIDTH,config);
-         ex.execute("layeredS", filter);
-      }
-      {
-         using filter_t = tdc::compact_hash::map::plain_elias_hashmap_t<value_type>;
-         typename filter_t::config_args config;
-         // config.size_manager_config.load_factor = ;
-         // config.storage_config.empty_value = ;
-         // config.displacement_config.table_config.bucket_size_config.bucket_size = ;
+    regist([&] {
+        using filter_t = tdc::compact_hash::map::sparse_elias_hashmap_t<value_type>;
+        typename filter_t::config_args config;
+        // config.size_manager_config.load_factor = ;
+        // config.storage_config = ;
+        // config.displacement_config.table_config.bucket_size_config.bucket_size = ;
 
         filter_t filter(0,ex.KEY_BITSIZE,filter_t::DEFAULT_VALUE_WIDTH,config);
-         ex.execute("eliasP", filter);
-      }
-      {
-         using filter_t = tdc::compact_hash::map::plain_cv_hashmap_t<value_type>;
-         typename filter_t::config_args config;
-         // config.size_manager_config.load_factor = ;
-         // config.storage_config.empty_value = ;
+        ex.execute("eliasS", filter);
+    });
+    regist([&] {
+        using filter_t = tdc::compact_hash::map::sparse_cv_hashmap_t<value_type>;
+        typename filter_t::config_args config;
+        // config.size_manager_config.load_factor = ;
 
-         filter_t filter(0,ex.KEY_BITSIZE,filter_t::DEFAULT_VALUE_WIDTH,config);
-         ex.execute("clearyP", filter);
-      }
-      {
-         using filter_t = tdc::compact_hash::map::plain_layered_hashmap_t<value_type>;
-         typename filter_t::config_args config;
-         // config.size_manager_config.load_factor = ;
-         // config.storage_config.empty_value = ;
+        filter_t filter(0,ex.KEY_BITSIZE,filter_t::DEFAULT_VALUE_WIDTH,config);
+        ex.execute("clearyS", filter);
+    });
+    regist([&] {
+        using filter_t = tdc::compact_hash::map::sparse_layered_hashmap_t<value_type>;
+        typename filter_t::config_args config;
+        // config.size_manager_config.load_factor = ;
 
-         filter_t filter(0,ex.KEY_BITSIZE,filter_t::DEFAULT_VALUE_WIDTH,config);
-         ex.execute("layeredP", filter);
-      }
+        filter_t filter(0,ex.KEY_BITSIZE,filter_t::DEFAULT_VALUE_WIDTH,config);
+        ex.execute("layeredS", filter);
+    });
+    regist([&] {
+        using filter_t = tdc::compact_hash::map::plain_elias_hashmap_t<value_type>;
+        typename filter_t::config_args config;
+        // config.size_manager_config.load_factor = ;
+        // config.storage_config.empty_value = ;
+        // config.displacement_config.table_config.bucket_size_config.bucket_size = ;
 
+    filter_t filter(0,ex.KEY_BITSIZE,filter_t::DEFAULT_VALUE_WIDTH,config);
+        ex.execute("eliasP", filter);
+    });
+    regist([&] {
+        using filter_t = tdc::compact_hash::map::plain_cv_hashmap_t<value_type>;
+        typename filter_t::config_args config;
+        // config.size_manager_config.load_factor = ;
+        // config.storage_config.empty_value = ;
+
+        filter_t filter(0,ex.KEY_BITSIZE,filter_t::DEFAULT_VALUE_WIDTH,config);
+        ex.execute("clearyP", filter);
+    });
+    regist([&] {
+        using filter_t = tdc::compact_hash::map::plain_layered_hashmap_t<value_type>;
+        typename filter_t::config_args config;
+        // config.size_manager_config.load_factor = ;
+        // config.storage_config.empty_value = ;
+
+        filter_t filter(0,ex.KEY_BITSIZE,filter_t::DEFAULT_VALUE_WIDTH,config);
+        ex.execute("layeredP", filter);
+    });
 #endif//USE_BONSAI_TABLES
 
+    regist([&] {
+        tsl::sparse_map<key_type,value_type> filter;
+        ex.execute("tsl", filter);
+    });
 
-      {
-	 tsl::sparse_map<key_type,value_type> filter;
-	 ex.execute("tsl", filter);
-      }
-
-      {
-	 google::sparse_hash_map<key_type,value_type> filter;
-	 ex.execute("google", filter);
-      }
-      {
-	 rigtorp::HashMap<key_type,value_type> filter(0, static_cast<key_type>(-1ULL));
-	 ex.execute("rigtorp", filter);
-      }
-      {
-	 std::unordered_map<key_type,value_type> filter;
-	 ex.execute("std", filter);
-      }
-      {
-	  spp::sparse_hash_map<key_type,value_type> filter;
-	  ex.execute("spp", filter);
-      }
-      std::cout << root.to_json().dump(4) << "\n";
+    regist([&] {
+        google::sparse_hash_map<key_type,value_type> filter;
+        ex.execute("google", filter);
+    });
+    regist([&] {
+        rigtorp::HashMap<key_type,value_type> filter(0, static_cast<key_type>(-1ULL));
+        ex.execute("rigtorp", filter);
+    });
+    regist([&] {
+        std::unordered_map<key_type,value_type> filter;
+        ex.execute("std", filter);
+    });
+    regist([&] {
+        spp::sparse_hash_map<key_type,value_type> filter;
+        ex.execute("spp", filter);
+    });
+    std::cout << root.to_json().dump(4) << "\n";
 }
 
 #include <type_traits>
