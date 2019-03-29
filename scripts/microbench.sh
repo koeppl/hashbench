@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/zsh
 
 # For debugging: exit script on the first failure
 set -e
