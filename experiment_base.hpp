@@ -122,6 +122,7 @@ void run_experiments(experiment_t& ex) {
         using filter_t = tdc::compact_hash::map::sparse_layered_hashmap_t<value_type>;
         typename filter_t::config_args config;
         // config.size_manager_config.load_factor = ;
+        // config.displacement_config.table_config.bit_width_config.width = ;
 
         filter_t filter(0,ex.KEY_BITSIZE,filter_t::DEFAULT_VALUE_WIDTH,config);
         ex.execute("layeredS", filter);
@@ -150,6 +151,7 @@ void run_experiments(experiment_t& ex) {
         typename filter_t::config_args config;
         // config.size_manager_config.load_factor = ;
         // config.storage_config.empty_value = ;
+        // config.displacement_config.table_config.bit_width_config.width = ;
 
         filter_t filter(0,ex.KEY_BITSIZE,filter_t::DEFAULT_VALUE_WIDTH,config);
         ex.execute("layeredP", filter);
