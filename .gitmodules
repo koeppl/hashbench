@@ -25,3 +25,6 @@
 [submodule "external/sparsepp"]
 	path = external/sparsepp
 	url = https://github.com/greg7mdp/sparsepp
+[submodule "external/broadwordsearch"]
+	path = external/broadwordsearch
+	url = https://github.com/koeppl/broadwordsearch

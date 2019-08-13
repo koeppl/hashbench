@@ -33,6 +33,7 @@ include_directories(external/tslsparse/include)
 include_directories(external/separate_chaining/include)
 include_directories(external/smhasher/src)
 include_directories(external/sparsepp)
+include_directories(external/broadwordsearch/include)
 
 add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/external/googlesparse/src/config.h
     COMMAND cd ${PROJECT_SOURCE_DIR}/external/googlesparse && ./configure && make)
@@ -86,11 +87,15 @@ add_dependencies(reservecopy googlesparse_config)
 add_dependencies(fingerprint googlesparse_config)
 
 
+
 if(NOT STATS_DISABLED)
     message("[INFO] Statistic tracking is enabled")
 target_link_libraries(randomcopy tudocomp_stat glog)
 target_link_libraries(reservecopy tudocomp_stat glog)
 target_link_libraries(fingerprint tudocomp_stat glog)
+
+add_executable  (linear_scaling linear_scaling.cpp)
+target_link_libraries(linear_scaling tudocomp_stat glog)
 endif(NOT STATS_DISABLED)
 
 
