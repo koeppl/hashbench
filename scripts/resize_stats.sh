@@ -6,7 +6,7 @@ function die {
 }
 
 
-overflow_types=(map_overflow array_overflow dummy_overflow)
+overflow_types=(cht_overflow map_overflow array_overflow dummy_overflow)
 hash_types=(HASH_SPLITMIX HASH_XORSHIFT HASH_MULTIPLICATIVE)
 bucket_sizes=(32 64 128 192 255)
 array_overflow_lengths=(512 256 4 16 64)
