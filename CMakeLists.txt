@@ -99,6 +99,28 @@ target_link_libraries(linear_scaling tudocomp_stat glog)
 endif(NOT STATS_DISABLED)
 
 
+##########
+# TESTS
+##########
+
+FIND_LIBRARY(GLOG_LIBRARY glog)
+FIND_PATH(GLOG_INCLUDE_DIR "glog/logging.h")
+
+find_package(GTest)
+include_directories(${GTEST_INCLUDE_DIR})
+
+add_executable  (test_overflow test_overflow.cpp)
+
+target_link_libraries(test_overflow gtest pthread ${GLOG_LIBRARY})
+
+enable_testing()
+add_test(NAME overflow COMMAND test_overflow)
+
+
+MESSAGE( STATUS "With Gtest?: " ${GTEST_INCLUDE_DIR} )
+
+
+
 MESSAGE( STATUS "With Celero?: " ${CELERO_INCLUDE_DIR} ${CELERO_LIB_DIR} )
 MESSAGE( STATUS "Built Type: " ${CMAKE_BUILD_TYPE} )
 MESSAGE( STATUS "CXX Flags: " ${CMAKE_CXX_FLAGS} )
