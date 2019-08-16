@@ -1,5 +1,9 @@
 #include <tudocomp/util/compact_hash/map/typedefs.hpp>
 
+#ifndef CHT_OVERFLOW_FRACTION
+constexpr float CHT_OVERFLOW_FRACTION = 0.6f;
+#endif
+
 namespace separate_chaining {
   template<class key_t, class value_t>
     class cht_overflow {
@@ -23,7 +27,7 @@ namespace separate_chaining {
         // }
 
         void initialize(size_t elements) {
-           const size_t reserve = std::ceil(elements/m_map.max_load_factor());
+           const size_t reserve = std::max<size_t>(1ULL, std::ceil(elements/m_map.max_load_factor()));
            uint_fast8_t reserve_bits = most_significant_bit(reserve);
            if(1ULL<<reserve_bits != reserve) ++reserve_bits;
            elements = 1ULL<<reserve_bits;
@@ -123,7 +127,7 @@ namespace separate_chaining {
             return position;
         }
         void resize_buckets(size_t bucketcount) {
-          initialize(bucketcount);
+          initialize(static_cast<size_t>(bucketcount * CHT_OVERFLOW_FRACTION));
           DCHECK_GE(m_map.table_size(), bucketcount); // sets the max. number of elements to the number of buckets in the hash table
           m_bucketfull.resize(bucketcount);
         }

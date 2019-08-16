@@ -36,7 +36,7 @@ T random_int(const T& maxvalue) {
 class Fixture {
    public:
    using key_type = uint32_t;
-   using value_type = uint64_t;
+   using value_type = uint8_t;
    static constexpr size_t NUM_RANGE = 32; // most_significant_bit(NUM_ELEMENTS)
    static_assert(sizeof(key_type)*8 >= NUM_RANGE, "Num range must fit into key_type");
 
@@ -153,7 +153,7 @@ m_bucket_avx2 = new bucket_avx2_type(NUM_RANGE);
       for(size_t val = 0; val < m_current_instance;) {
 	 const key_type key = random_int(1ULL<<NUM_RANGE);
 	 if( m_map->find(key) != m_map->end()) continue;
-	 (*m_map)[key] = val++;
+	 (*m_map)[key] = static_cast<value_type>(val++ % std::numeric_limits<value_type>::max());
       }
       m_missed_els.clear();
       m_missed_els.reserve(m_missed_els_size);

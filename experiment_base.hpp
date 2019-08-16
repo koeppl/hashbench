@@ -16,6 +16,7 @@ using namespace nlohmann;
 
 #include <sparsepp/spp.h>
 #include "demangled_type.hpp"
+#include "cht_overflow.hpp"
 
 template<class experiment_t>
 void run_experiments(experiment_t& ex) {
@@ -41,6 +42,10 @@ void run_experiments(experiment_t& ex) {
     };
 
     regist([&] {
+        separate_chaining_map<varwidth_bucket<>, plain_bucket<value_type>, xorshift_hash<>, incremental_resize, cht_overflow> filter(ex.KEY_BITSIZE);
+        ex.execute("chtI6", filter);
+    });
+    regist([&] {
         compact_chaining_map<xorshift_hash<>, uint8_t> filter(ex.KEY_BITSIZE, sizeof(value_type)*8);
         ex.execute("chmap", filter);
     });
@@ -48,6 +53,7 @@ void run_experiments(experiment_t& ex) {
     //     compact_chaining_map<xorshift_hash<>, uint64_t> filter(ex.KEY_BITSIZE, sizeof(value_type)*8);
     //     ex.execute("chmap64", filter);
     // });
+    //
     regist([&] {
         separate_chaining_map<varwidth_bucket<>, plain_bucket<value_type>, xorshift_hash<>> filter(ex.KEY_BITSIZE);
         ex.execute("chtI", filter);

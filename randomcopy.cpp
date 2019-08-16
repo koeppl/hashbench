@@ -11,7 +11,7 @@ class CopyExperiment {
    public:
       using mock_key_type = uint32_t;
       using key_type = uint32_t;
-      using value_type = uint32_t;
+      using value_type = uint8_t;
 
       const size_t NUM_ELEMENTS = 2000000;
       static constexpr uint8_t KEY_BITSIZE = 32;
@@ -34,7 +34,7 @@ class CopyExperiment {
       CopyExperiment(const char*const caption, size_t num_elements) : NUM_ELEMENTS(num_elements), m_caption(caption) {
 	 DCHECK_LT(NUM_ELEMENTS, 1ULL<<KEY_BITSIZE);
 	    for(size_t i = 0; m_map.size() < NUM_ELEMENTS; ++i) {
-	       m_map[random_int(1ULL<<KEY_BITSIZE)] = i;
+	       m_map[random_int(1ULL<<KEY_BITSIZE)] = static_cast<value_type>(i % (std::numeric_limits<value_type>::max()));
 	    }
       }
 

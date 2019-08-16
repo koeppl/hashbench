@@ -11,7 +11,7 @@ while [[ $size -le 268435456 ]]; do
 	set -x
 	../build/randomcopy "$size" > "$jsonfile"
 	set +x
-	./readjson.sh "$jsonfile" |
+	../scripts/readjson.sh "$jsonfile" |
 		while read -r line; do
 			echo "$line size=$size"
 		done
