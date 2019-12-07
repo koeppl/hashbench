@@ -24,6 +24,7 @@ class CopyExperiment {
 
       const size_t NUM_ELEMENTS;
       const uint8_t KEY_BITSIZE;
+      static constexpr uint8_t VALUE_BITSIZE = sizeof(value_type)*8;
       // static_assert(sizeof(key_type)*8 >= KEY_BITSIZE, "Num range must fit into key_type");
 
    private:
@@ -37,6 +38,7 @@ class CopyExperiment {
       void init(tdc::StatPhase& phase) const {
 	 phase.log("size", NUM_ELEMENTS);
 	 phase.log("key bit size", KEY_BITSIZE);
+	 phase.log("value bit size", VALUE_BITSIZE);
       }
       const char* caption() const { return m_caption; }
 

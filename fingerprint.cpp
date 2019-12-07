@@ -71,7 +71,8 @@ class FingerprintExperiment {
       using key_type = uint64_t;
       using value_type = uint32_t;
 
-      static constexpr uint8_t KEY_BITSIZE = 64;
+      static constexpr uint8_t KEY_BITSIZE = sizeof(key_type)*8;
+      static constexpr uint8_t VALUE_BITSIZE = sizeof(value_type)*8;
 
    private:
       const char*const m_caption;

@@ -26,13 +26,13 @@ namespace separate_chaining {
         //   m_bucketfull = std::move(other.m_bucketfull);
         // }
 
-        void initialize(size_t elements) {
+        void initialize(size_t elements, const uint_fast8_t key_width, const uint_fast8_t value_width) {
            const size_t reserve = std::max<size_t>(1ULL, std::ceil(elements/m_map.max_load_factor()));
            uint_fast8_t reserve_bits = most_significant_bit(reserve);
            if(1ULL<<reserve_bits != reserve) ++reserve_bits;
            elements = 1ULL<<reserve_bits;
 
-           m_map = map_type(elements, m_map.key_width());
+           m_map = map_type(elements, key_width, value_width);
            m_positions = tdc::BitVector(elements);
            DCHECK_EQ(m_map.table_size(), m_positions.size());
         }
@@ -41,7 +41,7 @@ namespace separate_chaining {
         size_t size() const { return m_map.size(); }
         size_t capacity() const { return m_map.table_size(); }
         
-        cht_overflow(uint_fast8_t keywidth) : m_map(2, keywidth) {
+        cht_overflow(uint_fast8_t key_width, uint_fast8_t value_width) : m_map(2, key_width, value_width) {
           m_map.max_load_factor(0.5);
         }
 
@@ -126,8 +126,8 @@ namespace separate_chaining {
             DCHECK_EQ(operator[](position), value);
             return position;
         }
-        void resize_buckets(size_t bucketcount) {
-          initialize(static_cast<size_t>(bucketcount * CHT_OVERFLOW_FRACTION));
+        void resize_buckets(size_t bucketcount, uint_fast8_t key_width, uint_fast8_t value_width) {
+          initialize(static_cast<size_t>(bucketcount * CHT_OVERFLOW_FRACTION), key_width, value_width);
           DCHECK_GE(m_map.table_size(), bucketcount); // sets the max. number of elements to the number of buckets in the hash table
           m_bucketfull.resize(bucketcount);
         }
@@ -139,8 +139,8 @@ namespace separate_chaining {
         size_t find(const key_type& key) { // returns position of key
           DCHECK_EQ(m_map.table_size(), m_positions.size());
             if(m_map.find(key) == nullptr) return static_cast<size_t>(-1ULL);
-          ON_DEBUG(const size_t formersize = m_map.size(); );
-          ON_DEBUG(const size_t formercap = m_map.table_size(); );
+          ON_DEBUG(const size_t formersize = m_map.size(); )
+          ON_DEBUG(const size_t formercap = m_map.table_size(); )
             const size_t position = m_map.access_entry(key).id();
             DDCHECK_EQ(formersize, m_map.size());
             DDCHECK_EQ(formercap, m_map.table_size());

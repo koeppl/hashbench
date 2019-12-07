@@ -6,6 +6,7 @@
 #include <tsl/sparse_map.h>
 #include <separate/separate_chaining_table.hpp>
 #include <separate/compact_chaining_map.hpp>
+#include <separate/group_chaining.hpp>
 #include <sparsehash/sparse_hash_map>
 
 #include <tudocomp_stat/json.hpp>
@@ -23,9 +24,11 @@ void run_experiments(experiment_t& ex) {
     using namespace separate_chaining;
     using experiment_type = experiment_t;
 
-    using mock_key_type = typename experiment_type::mock_key_type;
+    using mock_key_type = typename experiment_type::mock_key_type; //! if we know that the quotients use much less bits then the key_type, we can store the quotients in a plain array of type `mock_key_type` to save space while being faster than using a bit-compact vector for the bitwidth of the quotients
     using key_type = typename experiment_type::key_type;
     using value_type = typename experiment_type::value_type;
+
+    using value_bucket_type = varwidth_bucket<>; //plain_bucket<value_type>
 
 #ifdef STATS_DISABLED
     std::cout << "stats disabled. " << std::endl;
@@ -40,13 +43,21 @@ void run_experiments(experiment_t& ex) {
     auto regist = [&] (auto run_function) {
         bench_cases.push_back(run_function);
     };
+    regist([&] {
+            group::group_chaining_table<xorshift_hash<>> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
+        ex.execute("grp", filter);
+    });
+    regist([&] {
+            group::group_chaining_table<xorshift_hash<>, cht_overflow<key_type,value_type>> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
+        ex.execute("grp6", filter);
+    });
 
     regist([&] {
-        separate_chaining_map<varwidth_bucket<>, plain_bucket<value_type>, xorshift_hash<>, incremental_resize, cht_overflow> filter(ex.KEY_BITSIZE);
+        separate_chaining_map<varwidth_bucket<>, value_bucket_type, xorshift_hash<>, incremental_resize, cht_overflow> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
         ex.execute("chtI6", filter);
     });
     regist([&] {
-        compact_chaining_map<xorshift_hash<>, uint8_t> filter(ex.KEY_BITSIZE, sizeof(value_type)*8);
+        compact_chaining_map<xorshift_hash<>, uint8_t> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
         ex.execute("chmap", filter);
     });
     // regist([&] {
@@ -55,52 +66,52 @@ void run_experiments(experiment_t& ex) {
     // });
     //
     regist([&] {
-        separate_chaining_map<varwidth_bucket<>, plain_bucket<value_type>, xorshift_hash<>> filter(ex.KEY_BITSIZE);
+        separate_chaining_map<varwidth_bucket<>, value_bucket_type, xorshift_hash<>> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
         ex.execute("chtI", filter);
     });
     regist([&] {
-        separate_chaining_map<varwidth_bucket<>, plain_bucket<value_type>, xorshift_hash<>, arbitrary_resize> filter(ex.KEY_BITSIZE);
+        separate_chaining_map<varwidth_bucket<>, value_bucket_type, xorshift_hash<>, arbitrary_resize> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
         ex.execute("chtD", filter);
     });
 
     if constexpr(!std::is_same<mock_key_type, key_type>::value) {
         regist([&] {
-            separate_chaining_map<plain_bucket<mock_key_type>, plain_bucket<value_type>  , xorshift_hash<key_type, mock_key_type> > filter(ex.KEY_BITSIZE);
+            separate_chaining_map<plain_bucket<mock_key_type>, value_bucket_type  , xorshift_hash<key_type, mock_key_type> > filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
             ex.execute("plainMI", filter);
         });
         regist([&] {
-            separate_chaining_map<plain_bucket<mock_key_type>, plain_bucket<value_type>  , xorshift_hash<key_type, mock_key_type>, arbitrary_resize> filter(ex.KEY_BITSIZE);
+            separate_chaining_map<plain_bucket<mock_key_type>, value_bucket_type  , xorshift_hash<key_type, mock_key_type>, arbitrary_resize> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
             ex.execute("plainMD", filter);
         });
 
 #if defined(STATS_DISABLED) || defined(MALLOC_DISABLED)
         regist([&] {
-            separate_chaining_map<avx2_bucket<mock_key_type>, plain_bucket<value_type>  , xorshift_hash<key_type, mock_key_type>, incremental_resize> filter(ex.KEY_BITSIZE);
+            separate_chaining_map<avx2_bucket<mock_key_type>, value_bucket_type  , xorshift_hash<key_type, mock_key_type>, incremental_resize> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
             ex.execute("avxMI", filter);
         });
         regist([&] {
-            separate_chaining_map<avx2_bucket<mock_key_type>, plain_bucket<value_type>  , xorshift_hash<key_type, mock_key_type>, arbitrary_resize> filter(ex.KEY_BITSIZE);
+            separate_chaining_map<avx2_bucket<mock_key_type>, value_bucket_type  , xorshift_hash<key_type, mock_key_type>, arbitrary_resize> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
             ex.execute("avxMD", filter);
         });
 #endif
     }//if constexpr
 
     regist([&] {
-        separate_chaining_map<plain_bucket<key_type>, plain_bucket<value_type>  , hash_mapping_adapter<key_type , std::hash<key_type> >> filter;
+        separate_chaining_map<plain_bucket<key_type>, value_bucket_type  , hash_mapping_adapter<key_type , std::hash<key_type> >> filter;
         ex.execute("plainI", filter);
     });
     regist([&] {
-        separate_chaining_map<plain_bucket<key_type>, plain_bucket<value_type>  , hash_mapping_adapter<key_type , std::hash<key_type> >, arbitrary_resize> filter;
+        separate_chaining_map<plain_bucket<key_type>, value_bucket_type  , hash_mapping_adapter<key_type , std::hash<key_type> >, arbitrary_resize> filter;
         ex.execute("plainD", filter);
     });
 
 #if defined(STATS_DISABLED) || defined(MALLOC_DISABLED)
     regist([&] {
-        separate_chaining_map<avx2_bucket<key_type>, plain_bucket<value_type>  , hash_mapping_adapter<key_type , std::hash<key_type> >, incremental_resize> filter;
+        separate_chaining_map<avx2_bucket<key_type>, value_bucket_type  , hash_mapping_adapter<key_type , std::hash<key_type> >, incremental_resize> filter;
         ex.execute("avxI", filter);
     });
     regist([&] {
-        separate_chaining_map<avx2_bucket<key_type>, plain_bucket<value_type>  , hash_mapping_adapter<key_type , std::hash<key_type> >, arbitrary_resize> filter;
+        separate_chaining_map<avx2_bucket<key_type>, value_bucket_type  , hash_mapping_adapter<key_type , std::hash<key_type> >, arbitrary_resize> filter;
         ex.execute("avxD", filter);
     });
 #endif
@@ -113,7 +124,7 @@ void run_experiments(experiment_t& ex) {
         // config.storage_config = ;
         // config.displacement_config.table_config.bucket_size_config.bucket_size = ;
 
-        filter_t filter(0,ex.KEY_BITSIZE,filter_t::DEFAULT_VALUE_WIDTH,config);
+        filter_t filter(0,ex.KEY_BITSIZE,ex.VALUE_BITSIZE, config);
         ex.execute("eliasS", filter);
     });
     regist([&] {
@@ -121,7 +132,7 @@ void run_experiments(experiment_t& ex) {
         typename filter_t::config_args config;
         // config.size_manager_config.load_factor = ;
 
-        filter_t filter(0,ex.KEY_BITSIZE,filter_t::DEFAULT_VALUE_WIDTH,config);
+        filter_t filter(0,ex.KEY_BITSIZE,ex.VALUE_BITSIZE,config);
         ex.execute("clearyS", filter);
     });
     regist([&] {
@@ -130,7 +141,7 @@ void run_experiments(experiment_t& ex) {
         // config.size_manager_config.load_factor = ;
         // config.displacement_config.table_config.bit_width_config.width = ;
 
-        filter_t filter(0,ex.KEY_BITSIZE,filter_t::DEFAULT_VALUE_WIDTH,config);
+        filter_t filter(0,ex.KEY_BITSIZE,ex.VALUE_BITSIZE,config);
         ex.execute("layeredS", filter);
     });
     regist([&] {
@@ -140,7 +151,7 @@ void run_experiments(experiment_t& ex) {
         // config.storage_config.empty_value = ;
         // config.displacement_config.table_config.bucket_size_config.bucket_size = ;
 
-    filter_t filter(0,ex.KEY_BITSIZE,filter_t::DEFAULT_VALUE_WIDTH,config);
+    filter_t filter(0,ex.KEY_BITSIZE,ex.VALUE_BITSIZE,config);
         ex.execute("eliasP", filter);
     });
     regist([&] {
@@ -149,7 +160,7 @@ void run_experiments(experiment_t& ex) {
         // config.size_manager_config.load_factor = ;
         // config.storage_config.empty_value = ;
 
-        filter_t filter(0,ex.KEY_BITSIZE,filter_t::DEFAULT_VALUE_WIDTH,config);
+        filter_t filter(0,ex.KEY_BITSIZE,ex.VALUE_BITSIZE,config);
         ex.execute("clearyP", filter);
     });
     regist([&] {
@@ -159,7 +170,7 @@ void run_experiments(experiment_t& ex) {
         // config.storage_config.empty_value = ;
         // config.displacement_config.table_config.bit_width_config.width = ;
 
-        filter_t filter(0,ex.KEY_BITSIZE,filter_t::DEFAULT_VALUE_WIDTH,config);
+        filter_t filter(0,ex.KEY_BITSIZE,ex.VALUE_BITSIZE,config);
         ex.execute("layeredP", filter);
     });
 #endif//USE_BONSAI_TABLES

@@ -3,6 +3,7 @@
 #include <cmath>
 #include <separate/separate_chaining_table.hpp>
 #include <separate/compact_chaining_map.hpp>
+#include <separate/group_chaining.hpp>
 #include <separate/keysplit_adapter.hpp>
 #include <separate/bijective_hash.hpp>
 #include <separate/bucket_table.hpp>
@@ -18,12 +19,12 @@ void test_map_random(T& map) {
    using key_type = typename T::key_type;
    using value_type = typename T::value_type;
    const uint64_t max_key = map.max_key();
-   constexpr uint64_t max_value = std::numeric_limits<value_type>::max();
-   for(size_t reps = 0; reps < 100; ++reps) {
+   const uint64_t max_value = map.max_value();
+   for(size_t reps = 0; reps < 3; ++reps) {
 
       map.clear();
       std::map<typename T::key_type, typename T::value_type> rev;
-      for(size_t i = 0; i < 100; ++i) {
+      for(size_t i = 0; i < 3000; ++i) {
 	 const key_type key = random_int<key_type>(max_key);
 	 const value_type val = random_int<value_type>(max_value);
 	 map[key] = rev[key] = val;
@@ -52,7 +53,7 @@ void test_map_random(T& map) {
 TEST(chtoverflow, random) { 
    using namespace separate_chaining;
    {
-      using key_type = uint16_t;
+      using key_type = uint32_t;
       separate_chaining_map<plain_bucket<key_type>, plain_bucket<key_type> , hash_mapping_adapter<key_type, SplitMix>, incremental_resize, cht_overflow> map(sizeof(key_type)*8);
       test_map_random(map);
    }
@@ -66,6 +67,25 @@ TEST(chtoverflow, random) {
    //    separate_chaining_map<plain_bucket<key_type>, plain_bucket<key_type> , hash_mapping_adapter<key_type, SplitMix>, incremental_resize, cht_overflow> map(sizeof(key_type)*8);
    //    test_map_random_serialize(map);
    // }
+}
+
+TEST(chtoverflow, randomlow) { 
+   using namespace separate_chaining;
+   {
+      using key_type = uint32_t;
+      separate_chaining_map<plain_bucket<key_type>, plain_bucket<key_type> , hash_mapping_adapter<key_type, SplitMix>, incremental_resize, cht_overflow> map(15,3);
+      test_map_random(map);
+   }
+}
+
+TEST(grpoverflow, randomlow) { 
+   using namespace separate_chaining;
+   using namespace separate_chaining::group;
+   {
+      using key_type = uint32_t;
+      group_chaining_table<hash_mapping_adapter<uint64_t, SplitMix>, cht_overflow<key_type, size_t>> map(23,3);
+      test_map_random(map);
+   }
 }
 
 constexpr int most_significant_bit(const uint64_t& x) {
