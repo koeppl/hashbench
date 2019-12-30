@@ -11,11 +11,11 @@ class CopyExperiment {
    public:
       using mock_key_type = uint32_t;
       using key_type = uint32_t;
-      using value_type = uint8_t;
+      using value_type = default_value_type;
 
       const size_t NUM_ELEMENTS = 2000000;
       static constexpr uint8_t KEY_BITSIZE = sizeof(key_type)*8;
-      const uint8_t VALUE_BITSIZE = sizeof(value_type)*8;
+      const uint8_t VALUE_BITSIZE; // = sizeof(value_type)*8;
       static_assert(sizeof(key_type)*8 >= KEY_BITSIZE, "Num range must fit into key_type");
 
    private:
@@ -59,7 +59,7 @@ class CopyExperiment {
 	    {
 	       tdc::StatPhase v2("query");
 	       for(auto el : m_map) {
-		  if(filter[el.first] != (el.second + 1)) {
+		  if(static_cast<size_t>(filter[el.first]) != static_cast<size_t>(el.second + 1)) {
 		     std::cerr << "Element " << el.first << " -> " << (el.second + 1) << " not found in table " << demangled_type(T) << std::endl;
 		     if (exit_on_error) std::exit(1);
 		  }
@@ -110,7 +110,7 @@ int main(int argc, char** argv) {
    }
    const size_t num_elements = strtoul(argv[1], NULL, 10);
    const size_t value_width = strtoul(argv[2], NULL, 10);
-   DCHECK_LE(value_width, 64);
+   DCHECK_LE(value_width, default_value_width);
    DCHECK_GT(value_width, 0);
 
 

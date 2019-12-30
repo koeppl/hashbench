@@ -46,26 +46,26 @@ namespace separate_chaining {
         }
 
         bool valid_position(const size_t position) const { 
-          return position < m_positions.size() && m_positions[position] == 1;
+          return position < m_positions.size() && static_cast<bool>(m_positions[position]) == true;
         }
 
         size_t first_position() const {  // TODO: major bottleneck!
           size_t position = 0;
-          for(position = 0; position < m_positions.size() && m_positions[position] == 0; ++position) {}
+          for(position = 0; position < m_positions.size() && static_cast<bool>(m_positions[position]) == false; ++position) {}
           return position;
         }
         size_t next_position(size_t position) const { 
           DCHECK_LT(position,m_positions.size());
           do {
             ++position;
-          } while(position < m_positions.size() && m_positions[position] == 0);
+          } while(position < m_positions.size() && static_cast<bool>(m_positions[position]) == false);
           return position;
         }
         size_t previous_position(size_t position) const { 
           DCHECK_GT(position,0);
           do {
             --position;
-          } while(position > 0 && m_positions[position] == 0);
+          } while(position > 0 && static_cast<bool>(m_positions[position]) == false);
           return position;
         }
 

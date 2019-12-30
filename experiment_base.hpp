@@ -15,9 +15,11 @@ using namespace nlohmann;
 
 #include <tudocomp/util/compact_hash/map/typedefs.hpp>
 
+#include "defs.hpp"
 #include <sparsepp/spp.h>
 #include "demangled_type.hpp"
 #include "cht_overflow.hpp"
+
 
 template<class experiment_t>
 void run_experiments(experiment_t& ex) {
@@ -49,12 +51,12 @@ void run_experiments(experiment_t& ex) {
     });
     regist([&] {
             group::group_chaining_table<xorshift_hash<>, cht_overflow<key_type,value_type>> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
-        ex.execute("grp6", filter);
+        ex.execute("grpO", filter);
     });
 
     regist([&] {
         separate_chaining_map<varwidth_bucket<>, value_bucket_type, xorshift_hash<>, incremental_resize, cht_overflow> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
-        ex.execute("chtI6", filter);
+        ex.execute("chtIO", filter);
     });
     regist([&] {
         compact_chaining_map<xorshift_hash<>, uint8_t> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);

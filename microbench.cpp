@@ -8,6 +8,7 @@
 #include <tsl/sparse_map.h>
 #include <sparsehash/sparse_hash_map>
 
+#include <separate/group_chaining.hpp>
 #include <separate/separate_chaining_table.hpp>
 #include <separate/compact_chaining_map.hpp>
 #include <separate/dcheck.hpp>
@@ -21,6 +22,8 @@
 #include <separate/bucket_table.hpp>
 #endif
 
+#include "cht_overflow.hpp"
+#include "defs.hpp"
 #include <sparsepp/spp.h>
 
 using namespace separate_chaining;
@@ -36,9 +39,10 @@ T random_int(const T& maxvalue) {
 class Fixture {
    public:
    using key_type = uint32_t;
-   using value_type = uint8_t;
-   static constexpr size_t NUM_RANGE = 32; // most_significant_bit(NUM_ELEMENTS)
-   static_assert(sizeof(key_type)*8 >= NUM_RANGE, "Num range must fit into key_type");
+   using value_type = default_value_type;
+   static constexpr uint8_t VALUE_WIDTH = default_value_width;
+   static constexpr uint8_t KEY_WIDTH = 32; // most_significant_bit(NUM_ELEMENTS)
+   static_assert(sizeof(key_type)*8 >= KEY_WIDTH, "Num range must fit into key_type");
 
    using rigtorp_type = rigtorp::HashMap<key_type,value_type>;
    using google_type = google::sparse_hash_map<key_type,value_type>;
@@ -53,6 +57,9 @@ class Fixture {
    using avx2_type      = separate_chaining_map<avx2_bucket<key_type>  , plain_bucket<value_type>  , hash_mapping_adapter<key_type , SplitMix>, incremental_resize>;
    using avx2_arb_type      = separate_chaining_map<avx2_bucket<key_type>  , plain_bucket<value_type>  , hash_mapping_adapter<key_type , SplitMix>, arbitrary_resize>;
 #endif//__AXV2__
+   using group_type     = group::group_chaining_table<xorshift_hash<>>;
+   using groupO_type     = group::group_chaining_table<xorshift_hash<>, cht_overflow<key_type,value_type>>;
+   using compactO_type   = separate_chaining_map<varwidth_bucket<>        , plain_bucket<value_type>  , xorshift_hash<>, incremental_resize, cht_overflow>;
    using compact_type   = separate_chaining_map<varwidth_bucket<>        , plain_bucket<value_type>  , xorshift_hash<>, incremental_resize>;
    using compact_arb_type   = separate_chaining_map<varwidth_bucket<>        , plain_bucket<value_type>  , xorshift_hash<>, arbitrary_resize>;
    using compact_chain_type   = compact_chaining_map<xorshift_hash<> >;
@@ -83,6 +90,9 @@ using bucket_avx2_type   = bucket_table<varwidth_bucket<>        , plain_bucket<
 avx2_type* m_avx = nullptr;
 avx2_arb_type* m_avx_arb = nullptr;
 #endif //__AXV2__
+   group_type* m_group = nullptr;
+   groupO_type* m_groupO = nullptr;
+   compactO_type* m_compactO = nullptr;
    compact_type* m_compact = nullptr;
    compact_arb_type* m_compact_arb = nullptr;
    compact_chain_type *m_compact_chain = nullptr;
@@ -119,46 +129,49 @@ bucket_avx2_type* m_bucket_avx2 = nullptr;
 
       m_map = new map_type();
       m_ordered = new unordered_type();
-      m_plain = new plain_type();
-      m_plain_arb = new plain_arb_type();
+      m_plain = new plain_type(KEY_WIDTH, VALUE_WIDTH);
+      m_plain_arb = new plain_arb_type(KEY_WIDTH, VALUE_WIDTH);
 #ifdef __AXV2__
-      m_avx = new avx2_type();
-      m_avx_arb = new avx2_arb_type();
+      m_avx = new avx2_type(KEY_WIDTH, VALUE_WIDTH);
+      m_avx_arb = new avx2_arb_type(KEY_WIDTH, VALUE_WIDTH);
 #endif //__AXV2__
-      m_compact = new compact_type(NUM_RANGE);
-      m_compact_arb = new compact_arb_type(NUM_RANGE);
-      m_compact_chain = new compact_chain_type(NUM_RANGE, sizeof(value_type)*8);
+      m_group = new group_type(KEY_WIDTH, VALUE_WIDTH);
+      m_groupO = new groupO_type(KEY_WIDTH, VALUE_WIDTH);
+      m_compact = new compact_type(KEY_WIDTH, VALUE_WIDTH);
+      m_compactO = new compactO_type(KEY_WIDTH, VALUE_WIDTH);
+      m_compact_arb = new compact_arb_type(KEY_WIDTH, VALUE_WIDTH);
+      m_compact_chain = new compact_chain_type(KEY_WIDTH, VALUE_WIDTH);
       m_rigtorp = new rigtorp_type(0, static_cast<key_type>(-1ULL));
       m_google = new google_type();
       m_spp = new spp_type();
       m_tsl = new tsl_type();
 
 #ifdef USE_BONSAI_TABLES
-      m_eliasS = new eliasS_type(0,NUM_RANGE);
-      m_layeredS = new layeredS_type(0,NUM_RANGE);
-      m_clearyS = new clearyS_type(0,NUM_RANGE);
-      m_eliasP = new eliasP_type(0,NUM_RANGE);
-      m_layeredP = new layeredP_type(0,NUM_RANGE);
-      m_clearyP = new clearyP_type(0,NUM_RANGE);
+      m_eliasS = new eliasS_type(0,KEY_WIDTH, VALUE_WIDTH);
+      m_layeredS = new layeredS_type(0,KEY_WIDTH, VALUE_WIDTH);
+      m_clearyS = new clearyS_type(0,KEY_WIDTH, VALUE_WIDTH);
+      m_eliasP = new eliasP_type(0,KEY_WIDTH, VALUE_WIDTH);
+      m_layeredP = new layeredP_type(0,KEY_WIDTH, VALUE_WIDTH);
+      m_clearyP = new clearyP_type(0,KEY_WIDTH, VALUE_WIDTH);
 #endif//USE_BONSAI_TABLES
 
 #ifdef USE_BUCKET_TABLES
-      m_bucket = new bucket_type(NUM_RANGE);
-      m_bucket_arb = new bucket_arb_type(NUM_RANGE);
+      m_bucket = new bucket_type(KEY_WIDTH);
+      m_bucket_arb = new bucket_arb_type(KEY_WIDTH);
 #ifdef __AXV2__
-m_bucket_avx2 = new bucket_avx2_type(NUM_RANGE);
+m_bucket_avx2 = new bucket_avx2_type(KEY_WIDTH);
 #endif //__AXV2__
 #endif//USE_BUCKET_TABLES
 
       for(size_t val = 0; val < m_current_instance;) {
-	 const key_type key = random_int(1ULL<<NUM_RANGE);
+	 const key_type key = random_int(1ULL<<KEY_WIDTH);
 	 if( m_map->find(key) != m_map->end()) continue;
 	 (*m_map)[key] = static_cast<value_type>(val++ % std::numeric_limits<value_type>::max());
       }
       m_missed_els.clear();
       m_missed_els.reserve(m_missed_els_size);
       for(size_t val = 0; val < m_missed_els_size;) {
-	 const key_type key = random_int(1ULL<<NUM_RANGE);
+	 const key_type key = random_int(1ULL<<KEY_WIDTH);
 	 if( m_map->find(key) != m_map->end()) continue;
 	 m_missed_els.push_back(key); 
 	 ++val;
@@ -171,6 +184,9 @@ m_bucket_avx2 = new bucket_avx2_type(NUM_RANGE);
 (*m_avx)[el.first] = el.second;
 (*m_avx_arb)[el.first] = el.second;
 #endif //__AXV2__
+	 (*m_groupO)[el.first] = el.second;
+	 (*m_group)[el.first] = el.second;
+	 (*m_compactO)[el.first] = el.second;
 	 (*m_compact)[el.first] = el.second;
 	 (*m_compact_arb)[el.first] = el.second;
 	 (*m_compact_chain)[el.first] = el.second;
@@ -202,6 +218,9 @@ m_bucket_avx2 = new bucket_avx2_type(NUM_RANGE);
 DCHECK_EQ((*m_avx)[el.first], el.second);
 DCHECK_EQ((*m_avx_arb)[el.first], el.second);
 #endif //__AXV2__
+	 DCHECK_EQ((*m_groupO)[el.first], el.second);
+	 DCHECK_EQ((*m_group)[el.first], el.second);
+	 DCHECK_EQ((*m_compactO)[el.first], el.second);
 	 DCHECK_EQ((*m_compact)[el.first], el.second);
 	 DCHECK_EQ((*m_compact_arb)[el.first], el.second);
 	 DCHECK_EQ((*m_compact_chain)[el.first], el.second);
@@ -233,6 +252,9 @@ DCHECK_EQ((*m_bucket_avx2)[el.first] , el.second);
 DCHECK_EQ(m_avx->size(), m_ordered->size());
 DCHECK_EQ(m_avx_arb->size(), m_ordered->size());
 #endif //__AXV2__
+      DCHECK_EQ(m_groupO->size(), m_ordered->size());
+      DCHECK_EQ(m_group->size(), m_ordered->size());
+      DCHECK_EQ(m_compactO->size(), m_ordered->size());
       DCHECK_EQ(m_compact->size(), m_ordered->size());
       DCHECK_EQ(m_compact_arb->size(), m_ordered->size());
       DCHECK_EQ(m_compact_chain->size(), m_ordered->size());
@@ -267,6 +289,9 @@ DCHECK_EQ((m_bucket_avx2)->size() , m_ordered->size());
 delete m_avx;
 delete m_avx_arb;
 #endif //__AXV2__
+	 delete m_groupO;
+	 delete m_group;
+	 delete m_compactO;
 	 delete m_compact;
 	 delete m_compact_arb;
 	 delete m_compact_chain;
@@ -300,7 +325,15 @@ class TableFixture : public celero::TestFixture {
 
    protected:
 
-   const size_t m_instance_length;
+#ifndef INSTANCE_LENGTH 
+#ifdef USE_BUCKET_TABLES
+   static constexpr size_t m_instance_length = 255/3+2;
+#else
+   static constexpr size_t m_instance_length = 19;
+#endif//USE_BUCKET_TABLES
+#else 
+   static constexpr size_t m_instance_length = INSTANCE_LENGTH;
+#endif//INSTANCE_LENGTH
 
 
    std::vector<celero::TestFixture::ExperimentValue> m_problemspace;
@@ -315,8 +348,7 @@ class TableFixture : public celero::TestFixture {
    // }
 #ifdef USE_BUCKET_TABLES
    TableFixture()
-      : m_instance_length(255/3+2)
-      , m_problemspace(m_instance_length,0)
+      : m_problemspace(m_instance_length,0)
    {
       for(size_t i = 0; i < m_instance_length; ++i) {
 	 m_problemspace[i] = 2+3*i; 
@@ -324,8 +356,7 @@ class TableFixture : public celero::TestFixture {
    }
 #else
    TableFixture()
-      : m_instance_length(19)
-      , m_problemspace(m_instance_length,0)
+      : m_problemspace(m_instance_length,0)
    {
       size_t value = 1024;
       for(size_t i = 0; i < m_instance_length; ++i) {
@@ -393,6 +424,30 @@ BENCHMARK_F(query, avxD, TableFixture, 0, 100)
    }
 }
 #endif //__AXV2__
+
+BENCHMARK_F(query, grpO, TableFixture, 0, 100)
+{
+   const auto& groupO = *(static_fixture.m_groupO);
+   for(auto el : *static_fixture.m_map) {
+      celero::DoNotOptimizeAway(groupO.find(el.first));
+   }
+}
+
+BENCHMARK_F(query, grp, TableFixture, 0, 100)
+{
+   const auto& group = *(static_fixture.m_group);
+   for(auto el : *static_fixture.m_map) {
+      celero::DoNotOptimizeAway(group.find(el.first));
+   }
+}
+
+BENCHMARK_F(query, chtIO, TableFixture, 0, 100)
+{
+   const auto& compactO = *(static_fixture.m_compactO);
+   for(auto el : *static_fixture.m_map) {
+      celero::DoNotOptimizeAway(compactO.find(el.first));
+   }
+}
 
 BENCHMARK_F(query, chtI, TableFixture, 0, 100)
 {
@@ -530,22 +585,25 @@ BASELINE_F(insert, std, TableFixture, 0, 100)
       map[el.first] = el.second;
    }
 }
-BENCH_INSERT(plainI, plain_type())
-BENCH_INSERT(plainD, plain_arb_type())
+BENCH_INSERT(plainI, plain_type(Fixture::KEY_WIDTH, Fixture::VALUE_WIDTH))
+BENCH_INSERT(plainD, plain_arb_type(Fixture::KEY_WIDTH, Fixture::VALUE_WIDTH))
 #ifdef __AXV2__
-BENCH_INSERT(avxI, avx2_type())
-BENCH_INSERT(avxD, avx2_arb_type())
+BENCH_INSERT(avxI, avx2_type(Fixture::KEY_WIDTH, Fixture::VALUE_WIDTH))
+BENCH_INSERT(avxD, avx2_arb_type(Fixture::KEY_WIDTH, Fixture::VALUE_WIDTH))
 #endif //__AXV2__
-BENCH_INSERT(chtI, compact_type(Fixture::NUM_RANGE))
-BENCH_INSERT(chtD, compact_arb_type(Fixture::NUM_RANGE))
-BENCH_INSERT(chmap, compact_chain_type(Fixture::NUM_RANGE, sizeof(Fixture::value_type)*8))
+BENCH_INSERT(grpO, groupO_type(Fixture::KEY_WIDTH, Fixture::VALUE_WIDTH))
+BENCH_INSERT(grp, group_type(Fixture::KEY_WIDTH, Fixture::VALUE_WIDTH))
+BENCH_INSERT(chtIO, compactO_type(Fixture::KEY_WIDTH, Fixture::VALUE_WIDTH))
+BENCH_INSERT(chtI, compact_type(Fixture::KEY_WIDTH, Fixture::VALUE_WIDTH))
+BENCH_INSERT(chtD, compact_arb_type(Fixture::KEY_WIDTH, Fixture::VALUE_WIDTH))
+BENCH_INSERT(chmap, compact_chain_type(Fixture::KEY_WIDTH, Fixture::VALUE_WIDTH))
 #ifdef USE_BONSAI_TABLES
-BENCH_INSERT(clearyP, clearyP_type())
-BENCH_INSERT(eliasP, eliasP_type())
-BENCH_INSERT(layeredP, layeredP_type())
-BENCH_INSERT(clearyS, clearyS_type())
-BENCH_INSERT(eliasS, eliasS_type())
-BENCH_INSERT(layeredS, layeredS_type())
+BENCH_INSERT(clearyP, clearyP_type(0,Fixture::KEY_WIDTH, Fixture::VALUE_WIDTH))
+BENCH_INSERT(eliasP, eliasP_type(0,Fixture::KEY_WIDTH, Fixture::VALUE_WIDTH))
+BENCH_INSERT(layeredP, layeredP_type(0,Fixture::KEY_WIDTH, Fixture::VALUE_WIDTH))
+BENCH_INSERT(clearyS, clearyS_type(0,Fixture::KEY_WIDTH, Fixture::VALUE_WIDTH))
+BENCH_INSERT(eliasS, eliasS_type(0,Fixture::KEY_WIDTH, Fixture::VALUE_WIDTH))
+BENCH_INSERT(layeredS, layeredS_type(0,Fixture::KEY_WIDTH, Fixture::VALUE_WIDTH))
 #endif//USE_BONSAI_TABLES
 #ifdef USE_BUCKET_TABLES
 BENCH_INSERT(bucket, bucket_type())
@@ -579,6 +637,9 @@ BENCH_MISS(plainD, m_plain_arb)
 BENCH_MISS(avxI, m_avx)
 BENCH_MISS(avxD, m_avx_arb)
 #endif //__AXV2__
+BENCH_MISS(grpO, m_groupO)
+BENCH_MISS(grp, m_group)
+BENCH_MISS(chtIO, m_compactO)
 BENCH_MISS(chtI, m_compact)
 BENCH_MISS(chtD, m_compact_arb)
 BENCH_MISS(chmap, m_compact_chain)
@@ -639,6 +700,9 @@ class EraseFixture : public TableFixture {
 reinsert_elements(*static_fixture.m_avx);
 reinsert_elements(*static_fixture.m_avx_arb);
 #endif //__AXV2__
+      reinsert_elements(*static_fixture.m_groupO);
+      reinsert_elements(*static_fixture.m_group);
+      reinsert_elements(*static_fixture.m_compactO);
       reinsert_elements(*static_fixture.m_compact);
       reinsert_elements(*static_fixture.m_compact_arb);
       reinsert_elements(*static_fixture.m_compact_chain);
@@ -678,6 +742,9 @@ BENCH_ERASE(plainD, m_plain_arb)
 BENCH_ERASE(avxI, m_avx)
 BENCH_ERASE(avxD, m_avx_arb)
 #endif //__AXV2__
+BENCH_ERASE(grpO, m_groupO)
+BENCH_ERASE(grp, m_group)
+BENCH_ERASE(chtIO, m_compactO)
 BENCH_ERASE(chtI, m_compact)
 BENCH_ERASE(chtD, m_compact_arb)
 BENCH_ERASE(chmap, m_compact_chain)
