@@ -5,16 +5,19 @@ set -e
 set -o pipefail
 
 size=33554432
+value_widths=(1 2 4 8)
 jsonfile=$(mktemp)
 
 while [[ $size -le 268435456 ]]; do
-	set -x
-	../build/reservecopy "$size" > "$jsonfile"
-	set +x
-	./readjson.sh "$jsonfile" |
-		while read -r line; do
-			echo "$line size=$size"
-		done
-	((size=size*3/2))
+	for value_width in ${value_widths[@]}; do
+		set -x
+		../build/reservecopy "$size" "$value_width" > "$jsonfile"
+		set +x
+		./readjson.sh "$jsonfile" |
+			while read -r line; do
+				echo "$line size=$size"
+			done
+		((size=size*3/2))
+	done
 done
 rm $jsonfile
