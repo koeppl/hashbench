@@ -20,7 +20,7 @@ endif(STATS_DISABLED)
 set(CXX_STANDARD gnu++17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -march=native -fdiagnostics-color=auto -std=${CXX_STANDARD}  -DUSE_BONSAI_TABLES") # -DMALLOC_DISABLED=1")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 -ggdb -DDEBUG") #-D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mtune=native -DNDEBUG")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mtune=native -march=native -DNDEBUG")
 
 
 include_directories(include)
