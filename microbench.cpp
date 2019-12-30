@@ -80,7 +80,7 @@ using bucket_avx2_type   = bucket_table<varwidth_bucket<>        , plain_bucket<
 #endif //__AVX2__
 #endif//USE_BUCKET_TABLES
 
-   static constexpr size_t m_missed_els_size = 256;
+   static constexpr size_t m_missed_els_size = 1024;
    std::vector<key_type> m_missed_els;
    map_type* m_map = nullptr;
    unordered_type* m_ordered = nullptr;
@@ -385,7 +385,7 @@ class TableFixture : public celero::TestFixture {
 };
 
 
-BASELINE_F(query, std, TableFixture, 0, 100)
+BASELINE_F(query, std, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    const auto& map = *(static_fixture.m_ordered);
    for(auto el : *static_fixture.m_map) {
@@ -393,7 +393,7 @@ BASELINE_F(query, std, TableFixture, 0, 100)
    }
 }
 
-BENCHMARK_F(query, plainI, TableFixture, 0, 100)
+BENCHMARK_F(query, plainI, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    const auto& plain = *(static_fixture.m_plain);
    for(auto el : *static_fixture.m_map) {
@@ -401,7 +401,7 @@ BENCHMARK_F(query, plainI, TableFixture, 0, 100)
    }
 }
 
-BENCHMARK_F(query, plainD, TableFixture, 0, 100)
+BENCHMARK_F(query, plainD, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    const auto& plain_arb = *(static_fixture.m_plain_arb);
    for(auto el : *static_fixture.m_map) {
@@ -409,14 +409,14 @@ BENCHMARK_F(query, plainD, TableFixture, 0, 100)
    }
 }
 #ifdef __AVX2__
-BENCHMARK_F(query, avxI, TableFixture, 0, 100)
+BENCHMARK_F(query, avxI, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    const auto& avx = *(static_fixture.m_avx);
    for(auto el : *static_fixture.m_map) {
       celero::DoNotOptimizeAway(avx.find(el.first));
    }
 }
-BENCHMARK_F(query, avxD, TableFixture, 0, 100)
+BENCHMARK_F(query, avxD, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    const auto& avx = *(static_fixture.m_avx_arb);
    for(auto el : *static_fixture.m_map) {
@@ -425,7 +425,7 @@ BENCHMARK_F(query, avxD, TableFixture, 0, 100)
 }
 #endif //__AVX2__
 
-BENCHMARK_F(query, grpO, TableFixture, 0, 100)
+BENCHMARK_F(query, grpO, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    const auto& groupO = *(static_fixture.m_groupO);
    for(auto el : *static_fixture.m_map) {
@@ -433,7 +433,7 @@ BENCHMARK_F(query, grpO, TableFixture, 0, 100)
    }
 }
 
-BENCHMARK_F(query, grp, TableFixture, 0, 100)
+BENCHMARK_F(query, grp, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    const auto& group = *(static_fixture.m_group);
    for(auto el : *static_fixture.m_map) {
@@ -441,7 +441,7 @@ BENCHMARK_F(query, grp, TableFixture, 0, 100)
    }
 }
 
-BENCHMARK_F(query, chtIO, TableFixture, 0, 100)
+BENCHMARK_F(query, chtIO, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    const auto& compactO = *(static_fixture.m_compactO);
    for(auto el : *static_fixture.m_map) {
@@ -449,49 +449,49 @@ BENCHMARK_F(query, chtIO, TableFixture, 0, 100)
    }
 }
 
-BENCHMARK_F(query, chtI, TableFixture, 0, 100)
+BENCHMARK_F(query, chtI, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    const auto& compact = *(static_fixture.m_compact);
    for(auto el : *static_fixture.m_map) {
       celero::DoNotOptimizeAway(compact.find(el.first));
    }
 }
-BENCHMARK_F(query, chtD, TableFixture, 0, 100)
+BENCHMARK_F(query, chtD, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    const auto& compact = *(static_fixture.m_compact_arb);
    for(auto el : *static_fixture.m_map) {
       celero::DoNotOptimizeAway(compact.find(el.first));
    }
 }
-BENCHMARK_F(query, chmap, TableFixture, 0, 100)
+BENCHMARK_F(query, chmap, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    const auto& compact = *(static_fixture.m_compact_chain);
    for(auto el : *static_fixture.m_map) {
       celero::DoNotOptimizeAway(compact.find(el.first));
    }
 }
-BENCHMARK_F(query, rigtorp, TableFixture, 0, 100)
+BENCHMARK_F(query, rigtorp, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    const auto& mappe = *(static_fixture.m_rigtorp);
    for(auto el : *static_fixture.m_map) {
       celero::DoNotOptimizeAway(mappe.find(el.first));
    }
 }
-BENCHMARK_F(query, google, TableFixture, 0, 100)
+BENCHMARK_F(query, google, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    const auto& mappe = *(static_fixture.m_google);
    for(auto el : *static_fixture.m_map) {
       celero::DoNotOptimizeAway(mappe.find(el.first));
    }
 }
-BENCHMARK_F(query, spp, TableFixture, 0, 100)
+BENCHMARK_F(query, spp, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    const auto& mappe = *(static_fixture.m_spp);
    for(auto el : *static_fixture.m_map) {
       celero::DoNotOptimizeAway(mappe.find(el.first));
    }
 }
-BENCHMARK_F(query, tsl, TableFixture, 0, 100)
+BENCHMARK_F(query, tsl, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    const auto& mappe = *(static_fixture.m_tsl);
    for(auto el : *static_fixture.m_map) {
@@ -500,21 +500,21 @@ BENCHMARK_F(query, tsl, TableFixture, 0, 100)
 }
 
 #ifdef USE_BONSAI_TABLES
-BENCHMARK_F(query, clearyS, TableFixture, 0, 100)
+BENCHMARK_F(query, clearyS, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    auto& cleary = *(static_fixture.m_clearyS);
    for(auto el : *static_fixture.m_map) {
       celero::DoNotOptimizeAway(cleary[el.first]);
    }
 }
-BENCHMARK_F(query, clearyP, TableFixture, 0, 100)
+BENCHMARK_F(query, clearyP, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    auto& cleary = *(static_fixture.m_clearyP);
    for(auto el : *static_fixture.m_map) {
       celero::DoNotOptimizeAway(cleary[el.first]);
    }
 }
-BENCHMARK_F(query, eliasS, TableFixture, 0, 100)
+BENCHMARK_F(query, eliasS, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    auto& elias = *(static_fixture.m_eliasS);
    for(auto el : *static_fixture.m_map) {
@@ -522,14 +522,14 @@ BENCHMARK_F(query, eliasS, TableFixture, 0, 100)
    }
 }
 
-BENCHMARK_F(query, eliasP, TableFixture, 0, 100)
+BENCHMARK_F(query, eliasP, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    auto& elias = *(static_fixture.m_eliasP);
    for(auto el : *static_fixture.m_map) {
       celero::DoNotOptimizeAway(elias[el.first]);
    }
 }
-BENCHMARK_F(query, layeredS, TableFixture, 0, 100)
+BENCHMARK_F(query, layeredS, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    auto& layered = *(static_fixture.m_layeredS);
    for(auto el : *static_fixture.m_map) {
@@ -537,7 +537,7 @@ BENCHMARK_F(query, layeredS, TableFixture, 0, 100)
    }
 }
 
-BENCHMARK_F(query, layeredP, TableFixture, 0, 100)
+BENCHMARK_F(query, layeredP, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    auto& layered = *(static_fixture.m_layeredP);
    for(auto el : *static_fixture.m_map) {
@@ -546,14 +546,14 @@ BENCHMARK_F(query, layeredP, TableFixture, 0, 100)
 }
 #endif//USE_BONSAI_TABLES
 #ifdef USE_BUCKET_TABLES
-BENCHMARK_F(query, bucket, TableFixture, 0, 100)
+BENCHMARK_F(query, bucket, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    const auto& bucket = *(static_fixture.m_bucket);
    for(auto el : *static_fixture.m_map) {
       celero::DoNotOptimizeAway(bucket.find(el.first));
    }
 }
-BENCHMARK_F(query, bucket_arb, TableFixture, 0, 100)
+BENCHMARK_F(query, bucket_arb, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    const auto& bucket_arb = *(static_fixture.m_bucket_arb);
    for(auto el : *static_fixture.m_map) {
@@ -561,7 +561,7 @@ BENCHMARK_F(query, bucket_arb, TableFixture, 0, 100)
    }
 }
 #ifdef __AVX2__
-BENCHMARK_F(query, bucket_avx2, TableFixture, 0, 100)
+BENCHMARK_F(query, bucket_avx2, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    const auto& bucket_avx2 = *(static_fixture.m_bucket_avx2);
    for(auto el : *static_fixture.m_map) {
@@ -572,13 +572,13 @@ BENCHMARK_F(query, bucket_avx2, TableFixture, 0, 100)
 #endif//USE_BUCKET_TABLES
 
 #define BENCH_INSERT(name,cons) \
-	 BENCHMARK_F(insert, name, TableFixture, 0, 100) { \
+	 BENCHMARK_F(insert, name, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT) { \
 	    auto map = Fixture::cons; \
 	    for(auto el : *static_fixture.m_map) { map[el.first] = el.second; }}
 
 
 
-BASELINE_F(insert, std, TableFixture, 0, 100)
+BASELINE_F(insert, std, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    auto map = Fixture::unordered_type();
    for(auto el : *static_fixture.m_map) {
@@ -618,7 +618,7 @@ BENCH_INSERT(rigtorp, rigtorp_type(0, static_cast<Fixture::key_type>(-1ULL)))
 BENCH_INSERT(tsl, tsl_type())
 
 
-BASELINE_F(miss, std, TableFixture, 0, 100)
+BASELINE_F(miss, std, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    auto& map = *(static_fixture.m_ordered);
    for(auto el : static_fixture.m_missed_els) { celero::DoNotOptimizeAway(map[el]); }
@@ -626,7 +626,7 @@ BASELINE_F(miss, std, TableFixture, 0, 100)
 
 
 #define BENCH_MISS(name,instance) \
-      BENCHMARK_F(miss, name, TableFixture, 0, 100) { \
+      BENCHMARK_F(miss, name, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT) { \
 	 auto& map = *(static_fixture.instance);\
 	 for(auto el : static_fixture.m_missed_els) { celero::DoNotOptimizeAway(map[el]); }}
 
@@ -662,7 +662,7 @@ class EraseFixture : public TableFixture {
    public:
       using key_type = Fixture::key_type;
       using value_type = Fixture::value_type;
-   static constexpr size_t m_delete_entries_size = 256;
+   static constexpr size_t m_delete_entries_size = 1024;
    std::vector<std::pair<key_type, value_type>> m_delete_entries;
 
    EraseFixture() { }
@@ -676,7 +676,7 @@ class EraseFixture : public TableFixture {
       TableFixture::setUp(experimentValue.Value);
       m_delete_entries.clear();
       m_delete_entries.reserve(m_delete_entries_size);
-      size_t el = 0;
+      size_t el = 0; // TODO: this is a bug since it never gets incremented
       for(auto it = static_fixture.m_map->begin(); it != static_fixture.m_map->end(); ++it) {
 	 if(el % (static_fixture.m_map->size() / m_delete_entries_size) == 0) {
 	    m_delete_entries.push_back(std::make_pair(it->first, it->second));
@@ -723,7 +723,7 @@ reinsert_elements(*static_fixture.m_avx_arb);
 
 };
 
-BASELINE_F(erase, std, EraseFixture, 0, 100)
+BASELINE_F(erase, std, EraseFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    auto& map = *(static_fixture.m_ordered);
    for(auto el : this->m_delete_entries) { celero::DoNotOptimizeAway(map.erase(el.first)); }
@@ -731,7 +731,7 @@ BASELINE_F(erase, std, EraseFixture, 0, 100)
 
 
 #define BENCH_ERASE(name,instance) \
-      BENCHMARK_F(erase, name, EraseFixture, 0, 100) { \
+      BENCHMARK_F(erase, name, EraseFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT) { \
 	 auto& map = *(static_fixture.instance);\
 	 for(auto el : this->m_delete_entries) { celero::DoNotOptimizeAway(map.erase(el.first)); }}
 

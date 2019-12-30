@@ -1,5 +1,15 @@
 #include "experiment_base.hpp"
 
+template <typename T, typename = void>
+struct has_erase_fn
+    : std::false_type
+{};
+
+template <typename T>
+struct has_erase_fn<T, std::void_t<decltype(std::declval<T>().erase(std::declval<const default_value_type&>()  ))>> : std::true_type
+{};
+
+
 template<class T>
 T random_int(const T& maxvalue) {
    return static_cast<T>(std::rand() * (1.0 / (RAND_MAX + 1.0 )) * maxvalue);
@@ -22,6 +32,8 @@ class CopyExperiment {
       using map_type = std::unordered_map<key_type, value_type>;
 
       map_type m_map;
+	  static constexpr size_t m_erase_entries_size = 1024;
+	  std::vector<std::pair<key_type, value_type>> m_erase_entries;
 
       const char*const m_caption;
 
@@ -33,14 +45,21 @@ class CopyExperiment {
       }
       const char* caption() const { return m_caption; }
 
-      CopyExperiment(const char*const caption, size_t num_elements, uint8_t value_width) 
-	 : NUM_ELEMENTS(num_elements), VALUE_BITSIZE(value_width),  m_caption(caption) {
-	 const size_t maxvalue = (-1ULL)>>(64-VALUE_BITSIZE);
-	 DCHECK_LT(NUM_ELEMENTS, 1ULL<<KEY_BITSIZE);
-	    for(size_t i = 0; m_map.size() < NUM_ELEMENTS; ++i) {
-	       m_map[random_int(1ULL<<KEY_BITSIZE)] = static_cast<value_type>(i % maxvalue);
-	    }
-      }
+	  CopyExperiment(const char*const caption, size_t num_elements, uint8_t value_width) 
+		  : NUM_ELEMENTS(num_elements), VALUE_BITSIZE(value_width),  m_caption(caption) {
+			  const size_t maxvalue = (-1ULL)>>(64-VALUE_BITSIZE);
+			  DCHECK_LT(NUM_ELEMENTS, 1ULL<<KEY_BITSIZE);
+			  m_erase_entries.reserve(m_erase_entries_size);
+
+			  for(size_t i = 0; m_map.size() < NUM_ELEMENTS; ++i) {
+				  const key_type key = random_int(1ULL<<KEY_BITSIZE);
+				  const value_type value = static_cast<value_type>(i % maxvalue);
+				  m_map[key] = value;
+				  if(m_map.size() % (NUM_ELEMENTS / m_erase_entries_size) == 0) {
+					  m_erase_entries.push_back({key, value});
+				  }
+			  }
+		  }
 
 
       template<class T>
@@ -65,9 +84,11 @@ class CopyExperiment {
 		  }
 	       }
 	    }
-	    if constexpr (has_print_stats_fn<T>::value) {
-	       tdc::StatPhase finalize("finalize");
-	       filter.print_stats(finalize);
+	    if constexpr (has_erase_fn<T>::value) {
+	       tdc::StatPhase v2("erase");
+		   for(auto el : m_erase_entries) {
+			   filter.erase(el.first);
+		   }
 	    }
 	 }
 
@@ -96,6 +117,7 @@ class CopyExperiment {
 	       ++i;
 	    }
 	 }
+
 	 delete [] keys;
 	 delete [] values;
       }
