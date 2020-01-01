@@ -9,6 +9,9 @@
 #include <separate/group_chaining.hpp>
 #include <sparsehash/sparse_hash_map>
 
+// #include "cuckoo_dysect.h" //DySect
+// #include "utils/hash/murmur2_hash.h"
+
 #include <tudocomp_stat/json.hpp>
 using namespace nlohmann;
 #include <tudocomp_stat/StatPhase.hpp>
@@ -46,6 +49,12 @@ void run_experiments(experiment_t& ex) {
     auto regist = [&] (auto run_function) {
         bench_cases.push_back(run_function);
     };
+
+    // regist([&] {
+	// 		dysect::cuckoo_dysect<key_type, value_type, dysect::hash::murmur2_hash> filter(10000, 1.1);
+    //     ex.execute("dysect", filter);
+    // });
+
     regist([&] {
             group::group_chaining_table<xorshift_hash<>> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
         ex.execute("grp", filter);
@@ -185,6 +194,7 @@ void run_experiments(experiment_t& ex) {
 
     regist([&] {
         google::sparse_hash_map<key_type,value_type> filter;
+		filter.set_deleted_key(-1ULL);
         ex.execute("google", filter);
     });
     regist([&] {

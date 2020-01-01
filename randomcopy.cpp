@@ -28,11 +28,11 @@ class CopyExperiment {
       const uint8_t VALUE_BITSIZE; // = sizeof(value_type)*8;
       static_assert(sizeof(key_type)*8 >= KEY_BITSIZE, "Num range must fit into key_type");
 
+	  static constexpr size_t m_erase_entries_size = 1024;
    private:
       using map_type = std::unordered_map<key_type, value_type>;
 
       map_type m_map;
-	  static constexpr size_t m_erase_entries_size = 1024;
 	  std::vector<std::pair<key_type, value_type>> m_erase_entries;
 
       const char*const m_caption;
@@ -132,8 +132,9 @@ int main(int argc, char** argv) {
    }
    const size_t num_elements = strtoul(argv[1], NULL, 10);
    const size_t value_width = strtoul(argv[2], NULL, 10);
-   DCHECK_LE(value_width, default_value_width);
-   DCHECK_GT(value_width, 0);
+   CHECK_GT(num_elements, CopyExperiment::m_erase_entries_size);
+   CHECK_LE(value_width, default_value_width);
+   CHECK_GT(value_width, 0);
 
 
    CopyExperiment ex("Random Copy", num_elements, value_width);

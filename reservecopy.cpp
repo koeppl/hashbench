@@ -126,8 +126,9 @@ int main(int argc, char** argv) {
    }
    const size_t num_elements = strtoul(argv[1], NULL, 10);
    const size_t value_width = strtoul(argv[2], NULL, 10);
-   DCHECK_LE(value_width, default_value_width);
-   DCHECK_GT(value_width, 0);
+   CHECK_GT(num_elements, 0);
+   CHECK_LE(value_width, default_value_width);
+   CHECK_GT(value_width, 0);
 
 
 

@@ -34,6 +34,8 @@ include_directories(external/separate_chaining/include)
 include_directories(external/smhasher/src)
 include_directories(external/sparsepp)
 include_directories(external/broadwordsearch/include)
+# include_directories(external/DySECT/include)
+# include_directories(external/DySECT)
 
 add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/external/googlesparse/src/config.h
     COMMAND cd ${PROJECT_SOURCE_DIR}/external/googlesparse && ./configure && make)
