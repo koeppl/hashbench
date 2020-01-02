@@ -93,9 +93,9 @@ namespace separate_chaining {
         void clear() {
           m_map = map_type();
         }
-        void erase(const size_t position) { 
-            DCHECK_LT(position, m_map.size());
-           DCHECK(false);
+        void erase(const size_t position) {  // TODO: this is not yet implemented it the used cht
+            DCHECK_LT(position, capacity());
+            DCHECK(false);
         }
 
         size_t insert(const size_t bucket, const key_type& key, value_type&& value) {

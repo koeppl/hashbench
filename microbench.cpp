@@ -57,12 +57,12 @@ class Fixture {
    using avx2_type      = separate_chaining_map<avx2_bucket<key_type>  , plain_bucket<value_type>  , hash_mapping_adapter<key_type , SplitMix>, incremental_resize>;
    using avx2_arb_type      = separate_chaining_map<avx2_bucket<key_type>  , plain_bucket<value_type>  , hash_mapping_adapter<key_type , SplitMix>, arbitrary_resize>;
 #endif//__AVX2__
-   using group_type     = group::group_chaining_table<xorshift_hash<>>;
-   using groupO_type     = group::group_chaining_table<xorshift_hash<>, cht_overflow<key_type,value_type>>;
-   using compactO_type   = separate_chaining_map<varwidth_bucket<>        , plain_bucket<value_type>  , xorshift_hash<>, incremental_resize, cht_overflow>;
-   using compact_type   = separate_chaining_map<varwidth_bucket<>        , plain_bucket<value_type>  , xorshift_hash<>, incremental_resize>;
-   using compact_arb_type   = separate_chaining_map<varwidth_bucket<>        , plain_bucket<value_type>  , xorshift_hash<>, arbitrary_resize>;
-   using compact_chain_type   = compact_chaining_map<xorshift_hash<> >;
+   using group_type     = group::group_chaining_table<multiplicative_hash<>>;
+   using groupO_type     = group::group_chaining_table<multiplicative_hash<>, cht_overflow<key_type,value_type>>;
+   using compactO_type   = separate_chaining_map<varwidth_bucket<>        , plain_bucket<value_type>  , multiplicative_hash<>, incremental_resize, cht_overflow>;
+   using compact_type   = separate_chaining_map<varwidth_bucket<>        , plain_bucket<value_type>  , multiplicative_hash<>, incremental_resize>;
+   using compact_arb_type   = separate_chaining_map<varwidth_bucket<>        , plain_bucket<value_type>  , multiplicative_hash<>, arbitrary_resize>;
+   using compact_chain_type   = compact_chaining_map<multiplicative_hash<> >;
 #ifdef USE_BONSAI_TABLES
    using eliasS_type     = tdc::compact_hash::map::sparse_elias_hashmap_t<value_type>;
    using clearyS_type    = tdc::compact_hash::map::sparse_cv_hashmap_t<value_type>;

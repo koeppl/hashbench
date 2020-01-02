@@ -56,53 +56,53 @@ void run_experiments(experiment_t& ex) {
     // });
 
     regist([&] {
-            group::group_chaining_table<xorshift_hash<>> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
+            group::group_chaining_table<multiplicative_hash<>> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
         ex.execute("grp", filter);
     });
     regist([&] {
-            group::group_chaining_table<xorshift_hash<>, cht_overflow<key_type,value_type>> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
+            group::group_chaining_table<multiplicative_hash<>, cht_overflow<key_type,value_type>> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
         ex.execute("grpO", filter);
     });
 
     regist([&] {
-        separate_chaining_map<varwidth_bucket<>, value_bucket_type, xorshift_hash<>, incremental_resize, cht_overflow> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
+        separate_chaining_map<varwidth_bucket<>, value_bucket_type, multiplicative_hash<>, incremental_resize, cht_overflow> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
         ex.execute("chtIO", filter);
     });
     regist([&] {
-        compact_chaining_map<xorshift_hash<>, uint8_t> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
+        compact_chaining_map<multiplicative_hash<>, uint8_t> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
         ex.execute("chmap", filter);
     });
     // regist([&] {
-    //     compact_chaining_map<xorshift_hash<>, uint64_t> filter(ex.KEY_BITSIZE, sizeof(value_type)*8);
+    //     compact_chaining_map<multiplicative_hash<>, uint64_t> filter(ex.KEY_BITSIZE, sizeof(value_type)*8);
     //     ex.execute("chmap64", filter);
     // });
     //
     regist([&] {
-        separate_chaining_map<varwidth_bucket<>, value_bucket_type, xorshift_hash<>> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
+        separate_chaining_map<varwidth_bucket<>, value_bucket_type, multiplicative_hash<>> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
         ex.execute("chtI", filter);
     });
     regist([&] {
-        separate_chaining_map<varwidth_bucket<>, value_bucket_type, xorshift_hash<>, arbitrary_resize> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
+        separate_chaining_map<varwidth_bucket<>, value_bucket_type, multiplicative_hash<>, arbitrary_resize> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
         ex.execute("chtD", filter);
     });
 
     if constexpr(!std::is_same<mock_key_type, key_type>::value) {
         regist([&] {
-            separate_chaining_map<plain_bucket<mock_key_type>, value_bucket_type  , xorshift_hash<key_type, mock_key_type> > filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
+            separate_chaining_map<plain_bucket<mock_key_type>, value_bucket_type  , multiplicative_hash<key_type, mock_key_type> > filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
             ex.execute("plainMI", filter);
         });
         regist([&] {
-            separate_chaining_map<plain_bucket<mock_key_type>, value_bucket_type  , xorshift_hash<key_type, mock_key_type>, arbitrary_resize> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
+            separate_chaining_map<plain_bucket<mock_key_type>, value_bucket_type  , multiplicative_hash<key_type, mock_key_type>, arbitrary_resize> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
             ex.execute("plainMD", filter);
         });
 
 #if defined(STATS_DISABLED) || defined(MALLOC_DISABLED)
         regist([&] {
-            separate_chaining_map<avx2_bucket<mock_key_type>, value_bucket_type  , xorshift_hash<key_type, mock_key_type>, incremental_resize> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
+            separate_chaining_map<avx2_bucket<mock_key_type>, value_bucket_type  , multiplicative_hash<key_type, mock_key_type>, incremental_resize> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
             ex.execute("avxMI", filter);
         });
         regist([&] {
-            separate_chaining_map<avx2_bucket<mock_key_type>, value_bucket_type  , xorshift_hash<key_type, mock_key_type>, arbitrary_resize> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
+            separate_chaining_map<avx2_bucket<mock_key_type>, value_bucket_type  , multiplicative_hash<key_type, mock_key_type>, arbitrary_resize> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
             ex.execute("avxMD", filter);
         });
 #endif
