@@ -44,10 +44,10 @@ class Fixture {
    static constexpr uint8_t KEY_WIDTH = 32; // most_significant_bit(NUM_ELEMENTS)
    static_assert(sizeof(key_type)*8 >= KEY_WIDTH, "Num range must fit into key_type");
 
-   using rigtorp_type = rigtorp::HashMap<key_type,value_type>;
-   using google_type = google::sparse_hash_map<key_type,value_type>;
-   using spp_type = spp::sparse_hash_map<key_type,value_type>;
-   using tsl_type = tsl::sparse_map<key_type,value_type>;
+   using rigtorp_type = rigtorp::HashMap<key_type,value_type, SplitMix>;
+   using google_type = google::sparse_hash_map<key_type,value_type, SplitMix>;
+   using spp_type = spp::sparse_hash_map<key_type,value_type, SplitMix>;
+   using tsl_type = tsl::sparse_map<key_type,value_type, SplitMix>;
 
    using map_type       = std::map<key_type                                , value_type>;
    using unordered_type = std::unordered_map<key_type                      , value_type   , SplitMix>;
