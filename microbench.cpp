@@ -14,6 +14,8 @@
 #include <separate/dcheck.hpp>
 #include <map>
 
+#include "defs.hpp"
+
 #ifdef USE_BONSAI_TABLES
 #include <tudocomp/util/compact_hash/map/typedefs.hpp>
 #endif
@@ -23,7 +25,6 @@
 #endif
 
 #include "cht_overflow.hpp"
-#include "defs.hpp"
 #include <sparsepp/spp.h>
 
 using namespace separate_chaining;

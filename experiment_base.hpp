@@ -23,14 +23,12 @@ using namespace nlohmann;
 #include "demangled_type.hpp"
 #include "cht_overflow.hpp"
 
-#define MAX_LOAD_FACTOR 0.95
 
 template<class experiment_t>
 void run_experiments(experiment_t& ex) {
     using namespace separate_chaining;
     using experiment_type = experiment_t;
 
-    using mock_key_type = typename experiment_type::mock_key_type; //! if we know that the quotients use much less bits then the key_type, we can store the quotients in a plain array of type `mock_key_type` to save space while being faster than using a bit-compact vector for the bitwidth of the quotients
     using key_type = typename experiment_type::key_type;
     using value_type = typename experiment_type::value_type;
 
@@ -60,24 +58,6 @@ void run_experiments(experiment_t& ex) {
         ex.execute("grp", filter);
     });
     regist([&] {
-            group::group_chaining_table<multiplicative_hash<>, cht_overflow<key_type,value_type>> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
-        ex.execute("grpO", filter);
-    });
-
-    regist([&] {
-        separate_chaining_map<varwidth_bucket<>, value_bucket_type, multiplicative_hash<>, incremental_resize, cht_overflow> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
-        ex.execute("chtIO", filter);
-    });
-    regist([&] {
-        compact_chaining_map<multiplicative_hash<>, uint8_t> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
-        ex.execute("chmap", filter);
-    });
-    // regist([&] {
-    //     compact_chaining_map<multiplicative_hash<>, uint64_t> filter(ex.KEY_BITSIZE, sizeof(value_type)*8);
-    //     ex.execute("chmap64", filter);
-    // });
-    //
-    regist([&] {
         separate_chaining_map<varwidth_bucket<>, value_bucket_type, multiplicative_hash<>> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
         ex.execute("chtI", filter);
     });
@@ -86,6 +66,31 @@ void run_experiments(experiment_t& ex) {
         ex.execute("chtD", filter);
     });
 
+    // regist([&] {
+    //     compact_chaining_map<multiplicative_hash<>, uint8_t> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
+    //     ex.execute("chmap", filter);
+    // });
+
+#ifdef USE_OVERFLOW_TABLES
+    regist([&] {
+            group::group_chaining_table<multiplicative_hash<>, cht_overflow<key_type,value_type>> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
+        ex.execute("grpO", filter);
+    });
+
+    regist([&] {
+        separate_chaining_map<varwidth_bucket<>, value_bucket_type, multiplicative_hash<>, incremental_resize, cht_overflow> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
+        ex.execute("chtIO", filter);
+    });
+#endif//USE_OVERFLOW_TABLES
+
+    // regist([&] {
+    //     compact_chaining_map<multiplicative_hash<>, uint64_t> filter(ex.KEY_BITSIZE, sizeof(value_type)*8);
+    //     ex.execute("chmap64", filter);
+    // });
+    
+
+#ifdef USE_STANDARD_TABLES
+    using mock_key_type = typename experiment_type::mock_key_type; //! if we know that the quotients use much less bits then the key_type, we can store the quotients in a plain array of type `mock_key_type` to save space while being faster than using a bit-compact vector for the bitwidth of the quotients
     if constexpr(!std::is_same<mock_key_type, key_type>::value) {
         regist([&] {
             separate_chaining_map<plain_bucket<mock_key_type>, value_bucket_type  , multiplicative_hash<key_type, mock_key_type> > filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
@@ -116,6 +121,7 @@ void run_experiments(experiment_t& ex) {
         separate_chaining_map<plain_bucket<key_type>, value_bucket_type  , hash_mapping_adapter<key_type , SplitMix >, arbitrary_resize> filter;
         ex.execute("plainD", filter);
     });
+#endif// USE_STANDARD_TABLES
 
 #if defined(__AVX2__) && (defined(STATS_DISABLED) || defined(MALLOC_DISABLED))
     regist([&] {
@@ -202,6 +208,8 @@ void run_experiments(experiment_t& ex) {
     });
 #endif//USE_BONSAI_TABLES
 
+
+#ifdef USE_STANDARD_TABLES
     regist([&] {
         tsl::sparse_map<key_type,value_type,SplitMix> filter;
 #ifdef MAX_LOAD_FACTOR
@@ -233,6 +241,7 @@ void run_experiments(experiment_t& ex) {
 #endif
         ex.execute("spp", filter);
     });
+#endif //USE_STANDARD_TABLES
 
     // TODO: make algorithmens selectable per CLI flag
     for (auto& bench_case : bench_cases) {
