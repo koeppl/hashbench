@@ -23,7 +23,7 @@ using namespace nlohmann;
 #include "demangled_type.hpp"
 #include "cht_overflow.hpp"
 
-
+#define MAX_LOAD_FACTOR 0.95
 
 template<class experiment_t>
 void run_experiments(experiment_t& ex) {
@@ -96,7 +96,7 @@ void run_experiments(experiment_t& ex) {
             ex.execute("plainMD", filter);
         });
 
-#if defined(STATS_DISABLED) || defined(MALLOC_DISABLED)
+#if defined(__AVX2__) && (defined(STATS_DISABLED) || defined(MALLOC_DISABLED))
         regist([&] {
             separate_chaining_map<avx2_bucket<mock_key_type>, value_bucket_type  , multiplicative_hash<key_type, mock_key_type>, incremental_resize> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
             ex.execute("avxMI", filter);
@@ -109,21 +109,21 @@ void run_experiments(experiment_t& ex) {
     }//if constexpr
 
     regist([&] {
-        separate_chaining_map<plain_bucket<key_type>, value_bucket_type  , hash_mapping_adapter<key_type , std::hash<key_type> >> filter;
+        separate_chaining_map<plain_bucket<key_type>, value_bucket_type  , hash_mapping_adapter<key_type , SplitMix >> filter;
         ex.execute("plainI", filter);
     });
     regist([&] {
-        separate_chaining_map<plain_bucket<key_type>, value_bucket_type  , hash_mapping_adapter<key_type , std::hash<key_type> >, arbitrary_resize> filter;
+        separate_chaining_map<plain_bucket<key_type>, value_bucket_type  , hash_mapping_adapter<key_type , SplitMix >, arbitrary_resize> filter;
         ex.execute("plainD", filter);
     });
 
-#if defined(STATS_DISABLED) || defined(MALLOC_DISABLED)
+#if defined(__AVX2__) && (defined(STATS_DISABLED) || defined(MALLOC_DISABLED))
     regist([&] {
-        separate_chaining_map<avx2_bucket<key_type>, value_bucket_type  , hash_mapping_adapter<key_type , std::hash<key_type> >, incremental_resize> filter;
+        separate_chaining_map<avx2_bucket<key_type>, value_bucket_type  , hash_mapping_adapter<key_type , SplitMix >, incremental_resize> filter;
         ex.execute("avxI", filter);
     });
     regist([&] {
-        separate_chaining_map<avx2_bucket<key_type>, value_bucket_type  , hash_mapping_adapter<key_type , std::hash<key_type> >, arbitrary_resize> filter;
+        separate_chaining_map<avx2_bucket<key_type>, value_bucket_type  , hash_mapping_adapter<key_type , SplitMix >, arbitrary_resize> filter;
         ex.execute("avxD", filter);
     });
 #endif
@@ -137,6 +137,9 @@ void run_experiments(experiment_t& ex) {
         // config.displacement_config.table_config.bucket_size_config.bucket_size = ;
 
         filter_t filter(0,ex.KEY_BITSIZE,ex.VALUE_BITSIZE, config);
+#ifdef MAX_LOAD_FACTOR
+		filter.max_load_factor(MAX_LOAD_FACTOR);
+#endif
         ex.execute("eliasS", filter);
     });
     regist([&] {
@@ -145,6 +148,9 @@ void run_experiments(experiment_t& ex) {
         // config.size_manager_config.load_factor = ;
 
         filter_t filter(0,ex.KEY_BITSIZE,ex.VALUE_BITSIZE,config);
+#ifdef MAX_LOAD_FACTOR
+		filter.max_load_factor(MAX_LOAD_FACTOR);
+#endif
         ex.execute("clearyS", filter);
     });
     regist([&] {
@@ -154,6 +160,9 @@ void run_experiments(experiment_t& ex) {
         // config.displacement_config.table_config.bit_width_config.width = ;
 
         filter_t filter(0,ex.KEY_BITSIZE,ex.VALUE_BITSIZE,config);
+#ifdef MAX_LOAD_FACTOR
+		filter.max_load_factor(MAX_LOAD_FACTOR);
+#endif
         ex.execute("layeredS", filter);
     });
     regist([&] {
@@ -163,7 +172,10 @@ void run_experiments(experiment_t& ex) {
         // config.storage_config.empty_value = ;
         // config.displacement_config.table_config.bucket_size_config.bucket_size = ;
 
-    filter_t filter(0,ex.KEY_BITSIZE,ex.VALUE_BITSIZE,config);
+		filter_t filter(0,ex.KEY_BITSIZE,ex.VALUE_BITSIZE,config);
+#ifdef MAX_LOAD_FACTOR
+		filter.max_load_factor(MAX_LOAD_FACTOR);
+#endif
         ex.execute("eliasP", filter);
     });
     regist([&] {
@@ -173,6 +185,9 @@ void run_experiments(experiment_t& ex) {
         // config.storage_config.empty_value = ;
 
         filter_t filter(0,ex.KEY_BITSIZE,ex.VALUE_BITSIZE,config);
+#ifdef MAX_LOAD_FACTOR
+		filter.max_load_factor(MAX_LOAD_FACTOR);
+#endif
         ex.execute("clearyP", filter);
     });
     regist([&] {
@@ -188,25 +203,34 @@ void run_experiments(experiment_t& ex) {
 #endif//USE_BONSAI_TABLES
 
     regist([&] {
-        tsl::sparse_map<key_type,value_type> filter;
+        tsl::sparse_map<key_type,value_type,SplitMix> filter;
+#ifdef MAX_LOAD_FACTOR
+		filter.max_load_factor(MAX_LOAD_FACTOR);
+#endif
         ex.execute("tsl", filter);
     });
 
     regist([&] {
-        google::sparse_hash_map<key_type,value_type> filter;
-		filter.set_deleted_key(-1ULL);
+        google::sparse_hash_map<key_type,value_type,SplitMix> filter;
+		filter.set_deleted_key(static_cast<key_type>(-1ULL));
+#ifdef MAX_LOAD_FACTOR
+		filter.max_load_factor(MAX_LOAD_FACTOR);
+#endif
         ex.execute("google", filter);
     });
     regist([&] {
-        rigtorp::HashMap<key_type,value_type> filter(0, static_cast<key_type>(-1ULL));
+        rigtorp::HashMap<key_type,value_type,SplitMix> filter(0, static_cast<key_type>(-1ULL));
         ex.execute("rigtorp", filter);
     });
     regist([&] {
-        std::unordered_map<key_type,value_type> filter;
+        std::unordered_map<key_type,value_type,SplitMix> filter;
         ex.execute("std", filter);
     });
     regist([&] {
-        spp::sparse_hash_map<key_type,value_type> filter;
+        spp::sparse_hash_map<key_type,value_type,SplitMix> filter;
+#ifdef MAX_LOAD_FACTOR
+		filter.max_load_factor(MAX_LOAD_FACTOR);
+#endif
         ex.execute("spp", filter);
     });
 

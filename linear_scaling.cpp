@@ -1,3 +1,5 @@
+#define PRINT_STATS 1
+
 #include "linear_scaling.h"
 #include <iostream>
 #include <map>
