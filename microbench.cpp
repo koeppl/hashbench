@@ -207,6 +207,7 @@ m_bucket_avx2 = new bucket_avx2_type(KEY_WIDTH);
 	 m_missed_els.push_back(key); 
 	 ++val;
       }
+	  CHECK_EQ(m_missed_els.size(), m_missed_els_size);
       for(auto el : *m_map) {
 #ifdef __AVX2__
 (*m_avx)[el.first] = el.second;
@@ -434,7 +435,7 @@ class TableFixture : public celero::TestFixture {
    TableFixture()
       : m_problemspace(m_instance_length,0)
    {
-      size_t value = 1024;
+      size_t value = 1024*2;
       for(size_t i = 0; i < m_instance_length; ++i) {
 	 m_problemspace[i] = value;
 	 value = (value*3)/2;
@@ -777,16 +778,17 @@ class EraseFixture : public TableFixture {
    }
 
    virtual void setUp(const celero::TestFixture::ExperimentValue& experimentValue) override {
-      TableFixture::setUp(experimentValue.Value);
-      m_delete_entries.clear();
-      m_delete_entries.reserve(m_delete_entries_size);
-      size_t el = 0; // TODO: this is a bug since it never gets incremented
-      for(auto it = static_fixture.m_map->begin(); it != static_fixture.m_map->end(); ++it) {
-	 if(el % (static_fixture.m_map->size() / m_delete_entries_size) == 0) {
-	    m_delete_entries.push_back(std::make_pair(it->first, it->second));
-	 }
-      }
-      
+	   TableFixture::setUp(experimentValue.Value);
+	   m_delete_entries.clear();
+	   m_delete_entries.reserve(m_delete_entries_size);
+	   size_t el = 0; // TODO: this is a bug since it never gets incremented
+	   for(auto it = static_fixture.m_map->begin(); it != static_fixture.m_map->end() && m_delete_entries.size() < m_delete_entries_size; ++it) {
+		   if(el % (static_fixture.m_map->size() / m_delete_entries_size) == 0) {
+			   m_delete_entries.push_back(std::make_pair(it->first, it->second));
+		   }
+		   ++el;
+	   }
+	   CHECK_EQ(m_delete_entries.size(), m_delete_entries_size);
    }
 
    template<class T>

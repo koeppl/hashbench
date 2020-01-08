@@ -7,14 +7,14 @@
 using default_value_type = uint8_t;
 constexpr uint8_t default_value_width = sizeof(default_value_type)*8;
 
-#define USE_BONSAI_TABLES 1 // use the bonsai tables
-#define USE_OVERFLOW_TABLES 1 // use the overflow approach
-#define USE_STANDARD_TABLES 1 // use the overflow approach
-#define USE_PLAIN_TABLES 1 // use the overflow approach
-#define USE_CHMAP_TABLE 1 // use the overflow approach
-// #ifdef __AVX2__
-// #undef __AVX2__
-// #endif//__AVX2__
+// #define USE_BONSAI_TABLES 1 // use the bonsai tables
+// #define USE_OVERFLOW_TABLES 1 // use the overflow approach
+// #define USE_STANDARD_TABLES 1 // use the overflow approach
+// #define USE_PLAIN_TABLES 1 // use the overflow approach
+// #define USE_CHMAP_TABLE 1 // use the overflow approach
+#ifdef __AVX2__
+#undef __AVX2__
+#endif//__AVX2__
 
 #define INSTANCE_LENGTH  10 // length of the benchmark
 #define CELERO_SAMPLING_COUNT 0 // number of total samples
