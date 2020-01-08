@@ -95,7 +95,7 @@ namespace separate_chaining {
         }
         void erase(const size_t position) {  // TODO: this is not yet implemented it the used cht
             DCHECK_LT(position, capacity());
-            DCHECK(false);
+            // DCHECK(false);
         }
 
         size_t insert(const size_t bucket, const key_type& key, value_type&& value) {

@@ -143,9 +143,9 @@ void run_experiments(experiment_t& ex) {
         // config.displacement_config.table_config.bucket_size_config.bucket_size = ;
 
         filter_t filter(0,ex.KEY_BITSIZE,ex.VALUE_BITSIZE, config);
-#ifdef MAX_LOAD_FACTOR
-		filter.max_load_factor(MAX_LOAD_FACTOR);
-#endif
+// #ifdef MAX_LOAD_FACTOR // elias is already too slow!
+// 		filter.max_load_factor(MAX_LOAD_FACTOR);
+// #endif
         ex.execute("eliasS", filter);
     });
     regist([&] {
@@ -154,7 +154,7 @@ void run_experiments(experiment_t& ex) {
         // config.size_manager_config.load_factor = ;
 
         filter_t filter(0,ex.KEY_BITSIZE,ex.VALUE_BITSIZE,config);
-#ifdef MAX_LOAD_FACTOR
+#ifdef MAX_LOAD_FACTOR 
 		filter.max_load_factor(MAX_LOAD_FACTOR);
 #endif
         ex.execute("clearyS", filter);
@@ -179,9 +179,9 @@ void run_experiments(experiment_t& ex) {
         // config.displacement_config.table_config.bucket_size_config.bucket_size = ;
 
 		filter_t filter(0,ex.KEY_BITSIZE,ex.VALUE_BITSIZE,config);
-#ifdef MAX_LOAD_FACTOR
-		filter.max_load_factor(MAX_LOAD_FACTOR);
-#endif
+// #ifdef MAX_LOAD_FACTOR // elias is already too slow!
+// 		filter.max_load_factor(MAX_LOAD_FACTOR);
+// #endif
         ex.execute("eliasP", filter);
     });
     regist([&] {
