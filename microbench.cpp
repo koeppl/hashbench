@@ -2,19 +2,19 @@
 #undef STATS_ENABLED
 #endif
 
+#include "defs.hpp"
 #include <celero/Celero.h>
 
-#include <rigtorp/HashMap.h>
-#include <tsl/sparse_map.h>
-#include <sparsehash/sparse_hash_map>
+#include <separate/dcheck.hpp>
+
+#ifdef USE_CHMAP_TABLE
+#include <separate/compact_chaining_map.hpp>
+#endif//USE_CHMAP_TABLE
 
 #include <separate/group_chaining.hpp>
 #include <separate/separate_chaining_table.hpp>
-#include <separate/compact_chaining_map.hpp>
-#include <separate/dcheck.hpp>
 #include <map>
 
-#include "defs.hpp"
 
 #ifdef USE_BONSAI_TABLES
 #include <tudocomp/util/compact_hash/map/typedefs.hpp>
@@ -25,16 +25,18 @@
 #endif
 
 #include "cht_overflow.hpp"
+
+#ifdef USE_STANDARD_TABLES
+#include <rigtorp/HashMap.h>
+#include <tsl/sparse_map.h>
+#include <sparsehash/sparse_hash_map>
 #include <sparsepp/spp.h>
+#endif//USE_STANDARD_TABLES
 
 using namespace separate_chaining;
 
 CELERO_MAIN
 
-template<class T>
-T random_int(const T& maxvalue) {
-   return static_cast<T>(std::rand() * (1.0 / (RAND_MAX + 1.0 )) * maxvalue);
-}
 
 
 class Fixture {
@@ -45,25 +47,34 @@ class Fixture {
    static constexpr uint8_t KEY_WIDTH = 32; // most_significant_bit(NUM_ELEMENTS)
    static_assert(sizeof(key_type)*8 >= KEY_WIDTH, "Num range must fit into key_type");
 
+#ifdef USE_STANDARD_TABLES 
    using rigtorp_type = rigtorp::HashMap<key_type,value_type, SplitMix>;
    using google_type = google::sparse_hash_map<key_type,value_type, SplitMix>;
    using spp_type = spp::sparse_hash_map<key_type,value_type, SplitMix>;
    using tsl_type = tsl::sparse_map<key_type,value_type, SplitMix>;
+#endif//USE_STANDARD_TABLES
 
-   using map_type       = std::map<key_type                                , value_type>;
    using unordered_type = std::unordered_map<key_type                      , value_type   , SplitMix>;
+   using map_type       = std::map<key_type                                , value_type>;
+
+#ifdef USE_PLAIN_TABLES
    using plain_arb_type     = separate_chaining_map<plain_bucket<key_type> , plain_bucket<value_type>  , hash_mapping_adapter<key_type , SplitMix>, arbitrary_resize>;
    using plain_type     = separate_chaining_map<plain_bucket<key_type> , plain_bucket<value_type>  , hash_mapping_adapter<key_type , SplitMix>>;
+#endif//USE_PLAIN_TABLES
 #ifdef __AVX2__
    using avx2_type      = separate_chaining_map<avx2_bucket<key_type>  , plain_bucket<value_type>  , hash_mapping_adapter<key_type , SplitMix>, incremental_resize>;
    using avx2_arb_type      = separate_chaining_map<avx2_bucket<key_type>  , plain_bucket<value_type>  , hash_mapping_adapter<key_type , SplitMix>, arbitrary_resize>;
 #endif//__AVX2__
    using group_type     = group::group_chaining_table<multiplicative_hash<>>;
+#ifdef USE_OVERFLOW_TABLES 
    using groupO_type     = group::group_chaining_table<multiplicative_hash<>, cht_overflow<key_type,value_type>>;
    using compactO_type   = separate_chaining_map<varwidth_bucket<>        , plain_bucket<value_type>  , multiplicative_hash<>, incremental_resize, cht_overflow>;
+#endif//USE_OVERFLOW_TABLES 
    using compact_type   = separate_chaining_map<varwidth_bucket<>        , plain_bucket<value_type>  , multiplicative_hash<>, incremental_resize>;
    using compact_arb_type   = separate_chaining_map<varwidth_bucket<>        , plain_bucket<value_type>  , multiplicative_hash<>, arbitrary_resize>;
+#ifdef USE_CHMAP_TABLE
    using compact_chain_type   = compact_chaining_map<multiplicative_hash<> >;
+#endif//USE_CHMAP_TABLE
 #ifdef USE_BONSAI_TABLES
    using eliasS_type     = tdc::compact_hash::map::sparse_elias_hashmap_t<value_type>;
    using clearyS_type    = tdc::compact_hash::map::sparse_cv_hashmap_t<value_type>;
@@ -84,24 +95,32 @@ using bucket_avx2_type   = bucket_table<varwidth_bucket<>        , plain_bucket<
    static constexpr size_t m_missed_els_size = 1024;
    std::vector<key_type> m_missed_els;
    map_type* m_map = nullptr;
-   unordered_type* m_ordered = nullptr;
+#ifdef USE_PLAIN_TABLES
    plain_type* m_plain = nullptr;
    plain_arb_type* m_plain_arb = nullptr;
+#endif//USE_PLAIN_TABLES
 #ifdef __AVX2__
 avx2_type* m_avx = nullptr;
 avx2_arb_type* m_avx_arb = nullptr;
 #endif //__AVX2__
-   group_type* m_group = nullptr;
+#ifdef USE_OVERFLOW_TABLES 
    groupO_type* m_groupO = nullptr;
    compactO_type* m_compactO = nullptr;
+#endif//USE_OVERFLOW_TABLES 
+   group_type* m_group = nullptr;
    compact_type* m_compact = nullptr;
    compact_arb_type* m_compact_arb = nullptr;
+#ifdef USE_CHMAP_TABLE
    compact_chain_type *m_compact_chain = nullptr;
+#endif//USE_CHMAP_TABLE
+   unordered_type* m_ordered = nullptr;
 
+#ifdef USE_STANDARD_TABLES 
    rigtorp_type* m_rigtorp = nullptr;
    google_type* m_google = nullptr;
    spp_type* m_spp = nullptr;
    tsl_type* m_tsl = nullptr;
+#endif//USE_STANDARD_TABLES
 
 #ifdef USE_BONSAI_TABLES
    eliasP_type* m_eliasP = nullptr;
@@ -129,23 +148,33 @@ bucket_avx2_type* m_bucket_avx2 = nullptr;
       m_current_instance = i;
 
       m_map = new map_type();
-      m_ordered = new unordered_type();
+
+#ifdef USE_PLAIN_TABLES
       m_plain = new plain_type(KEY_WIDTH, VALUE_WIDTH);
       m_plain_arb = new plain_arb_type(KEY_WIDTH, VALUE_WIDTH);
+#endif//USE_PLAIN_TABLES
+
 #ifdef __AVX2__
       m_avx = new avx2_type(KEY_WIDTH, VALUE_WIDTH);
       m_avx_arb = new avx2_arb_type(KEY_WIDTH, VALUE_WIDTH);
 #endif //__AVX2__
-      m_group = new group_type(KEY_WIDTH, VALUE_WIDTH);
+#ifdef USE_OVERFLOW_TABLES 
       m_groupO = new groupO_type(KEY_WIDTH, VALUE_WIDTH);
-      m_compact = new compact_type(KEY_WIDTH, VALUE_WIDTH);
       m_compactO = new compactO_type(KEY_WIDTH, VALUE_WIDTH);
+#endif//USE_OVERFLOW_TABLES 
+      m_group = new group_type(KEY_WIDTH, VALUE_WIDTH);
+      m_compact = new compact_type(KEY_WIDTH, VALUE_WIDTH);
       m_compact_arb = new compact_arb_type(KEY_WIDTH, VALUE_WIDTH);
+#ifdef USE_CHMAP_TABLE
       m_compact_chain = new compact_chain_type(KEY_WIDTH, VALUE_WIDTH);
+#endif//USE_CHMAP_TABLE
+      m_ordered = new unordered_type();
+#ifdef USE_STANDARD_TABLES
       m_rigtorp = new rigtorp_type(0, static_cast<key_type>(-1ULL));
       m_google = new google_type();
       m_spp = new spp_type();
       m_tsl = new tsl_type();
+#endif//USE_STANDARD_TABLES
 
 #ifdef USE_BONSAI_TABLES
       m_eliasS = new eliasS_type(0,KEY_WIDTH, VALUE_WIDTH);
@@ -164,6 +193,7 @@ m_bucket_avx2 = new bucket_avx2_type(KEY_WIDTH);
 #endif //__AVX2__
 #endif//USE_BUCKET_TABLES
 
+	  random_int_reset();
       for(size_t val = 0; val < m_current_instance;) {
 	 const key_type key = random_int(1ULL<<KEY_WIDTH);
 	 if( m_map->find(key) != m_map->end()) continue;
@@ -178,23 +208,33 @@ m_bucket_avx2 = new bucket_avx2_type(KEY_WIDTH);
 	 ++val;
       }
       for(auto el : *m_map) {
-	 (*m_ordered)[el.first] = el.second;
-	 (*m_plain)[el.first] = el.second;
-	 (*m_plain_arb)[el.first] = el.second;
 #ifdef __AVX2__
 (*m_avx)[el.first] = el.second;
 (*m_avx_arb)[el.first] = el.second;
 #endif //__AVX2__
+#ifdef USE_OVERFLOW_TABLES 
 	 (*m_groupO)[el.first] = el.second;
-	 (*m_group)[el.first] = el.second;
 	 (*m_compactO)[el.first] = el.second;
+#endif//USE_OVERFLOW_TABLES 
+
+	 (*m_group)[el.first] = el.second;
 	 (*m_compact)[el.first] = el.second;
 	 (*m_compact_arb)[el.first] = el.second;
+#ifdef USE_CHMAP_TABLE
 	 (*m_compact_chain)[el.first] = el.second;
+#endif//USE_CHMAP_TABLE
+
+	 (*m_ordered)[el.first] = el.second;
+#ifdef USE_PLAIN_TABLES
+	 (*m_plain)[el.first] = el.second;
+	 (*m_plain_arb)[el.first] = el.second;
+#endif//USE_PLAIN_TABLES
+#ifdef USE_STANDARD_TABLES 
 	 (*m_google)[el.first] = el.second;
 	 (*m_spp)[el.first] = el.second;
 	 (*m_rigtorp)[el.first] = el.second;
 	 (*m_tsl)[el.first] = el.second;
+#endif//USE_STANDARD_TABLES
 
 #ifdef USE_BONSAI_TABLES
 	 (*m_clearyP)[el.first] = el.second;
@@ -212,23 +252,34 @@ m_bucket_avx2 = new bucket_avx2_type(KEY_WIDTH);
 #endif //__AVX2__
 #endif//USE_BUCKET_TABLES
 
-	 DCHECK_EQ((*m_ordered)[el.first], el.second);
-	 DCHECK_EQ((*m_plain)[el.first], el.second);
-	 DCHECK_EQ((*m_plain_arb)[el.first], el.second);
 #ifdef __AVX2__
 DCHECK_EQ((*m_avx)[el.first], el.second);
 DCHECK_EQ((*m_avx_arb)[el.first], el.second);
 #endif //__AVX2__
+#ifdef USE_OVERFLOW_TABLES 
 	 DCHECK_EQ((*m_groupO)[el.first], el.second);
-	 DCHECK_EQ((*m_group)[el.first], el.second);
 	 DCHECK_EQ((*m_compactO)[el.first], el.second);
+#endif//USE_OVERFLOW_TABLES 
+	 DCHECK_EQ((*m_group)[el.first], el.second);
 	 DCHECK_EQ((*m_compact)[el.first], el.second);
 	 DCHECK_EQ((*m_compact_arb)[el.first], el.second);
+
+#ifdef USE_CHMAP_TABLE
 	 DCHECK_EQ((*m_compact_chain)[el.first], el.second);
+#endif//USE_CHMAP_TABLE
+
+
+	 DCHECK_EQ((*m_ordered)[el.first], el.second);
+#ifdef USE_PLAIN_TABLES
+	 DCHECK_EQ((*m_plain)[el.first], el.second);
+	 DCHECK_EQ((*m_plain_arb)[el.first], el.second);
+#endif//USE_PLAIN_TABLES
+#ifdef USE_STANDARD_TABLES
 	 DCHECK_EQ((*m_google)[el.first], el.second);
 	 DCHECK_EQ((*m_spp)[el.first], el.second);
 	 DCHECK_EQ((*m_rigtorp)[el.first], el.second);
 	 DCHECK_EQ((*m_tsl)[el.first], el.second);
+#endif//USE_STANDARD_TABLES
 
 #ifdef USE_BONSAI_TABLES
 	 DCHECK_EQ((*m_clearyP)[el.first], el.second);
@@ -247,36 +298,48 @@ DCHECK_EQ((*m_bucket_avx2)[el.first] , el.second);
 #endif//USE_BUCKET_TABLES
 
       }
-      DCHECK_EQ(m_ordered->size(), m_map->size());
-      DCHECK_EQ(m_plain_arb->size(), m_ordered->size());
 #ifdef __AVX2__
-DCHECK_EQ(m_avx->size(), m_ordered->size());
-DCHECK_EQ(m_avx_arb->size(), m_ordered->size());
+DCHECK_EQ(m_avx->size(), m_map->size());
+DCHECK_EQ(m_avx_arb->size(), m_map->size());
 #endif //__AVX2__
-      DCHECK_EQ(m_groupO->size(), m_ordered->size());
-      DCHECK_EQ(m_group->size(), m_ordered->size());
-      DCHECK_EQ(m_compactO->size(), m_ordered->size());
-      DCHECK_EQ(m_compact->size(), m_ordered->size());
-      DCHECK_EQ(m_compact_arb->size(), m_ordered->size());
-      DCHECK_EQ(m_compact_chain->size(), m_ordered->size());
-      DCHECK_EQ(m_google->size(), m_ordered->size());
-      DCHECK_EQ(m_spp->size(), m_ordered->size());
-      DCHECK_EQ(m_rigtorp->size(), m_ordered->size());
-      DCHECK_EQ(m_tsl->size(), m_ordered->size());
+#ifdef USE_OVERFLOW_TABLES 
+      DCHECK_EQ(m_groupO->size(), m_map->size());
+      DCHECK_EQ(m_compactO->size(), m_map->size());
+#endif//USE_OVERFLOW_TABLES 
+      DCHECK_EQ(m_group->size(), m_map->size());
+      DCHECK_EQ(m_compact->size(), m_map->size());
+      DCHECK_EQ(m_compact_arb->size(), m_map->size());
+
+#ifdef USE_CHMAP_TABLE
+      DCHECK_EQ(m_compact_chain->size(), m_map->size());
+#endif//USE_CHMAP_TABLE
+
+
+      DCHECK_EQ(m_ordered->size(), m_map->size());
+#ifdef USE_PLAIN_TABLES
+      DCHECK_EQ(m_plain->size(), m_map->size());
+      DCHECK_EQ(m_plain_arb->size(), m_map->size());
+#endif//USE_PLAIN_TABLES
+#ifdef USE_STANDARD_TABLES
+      DCHECK_EQ(m_google->size(), m_map->size());
+      DCHECK_EQ(m_spp->size(), m_map->size());
+      DCHECK_EQ(m_rigtorp->size(), m_map->size());
+      DCHECK_EQ(m_tsl->size(), m_map->size());
+#endif//USE_STANDARD_TABLES
 
 #ifdef USE_BONSAI_TABLES
-      DCHECK_EQ(m_clearyP->size(), m_ordered->size());
-      DCHECK_EQ(m_eliasP->size(), m_ordered->size());
-      DCHECK_EQ(m_layeredP->size(), m_ordered->size());
-      DCHECK_EQ(m_clearyS->size(), m_ordered->size());
-      DCHECK_EQ(m_eliasS->size(), m_ordered->size());
-      DCHECK_EQ(m_layeredS->size(), m_ordered->size());
+      DCHECK_EQ(m_clearyP->size(), m_map->size());
+      DCHECK_EQ(m_eliasP->size(), m_map->size());
+      DCHECK_EQ(m_layeredP->size(), m_map->size());
+      DCHECK_EQ(m_clearyS->size(), m_map->size());
+      DCHECK_EQ(m_eliasS->size(), m_map->size());
+      DCHECK_EQ(m_layeredS->size(), m_map->size());
 #endif//USE_BONSAI_TABLES
 #ifdef USE_BUCKET_TABLES
-      DCHECK_EQ((m_bucket)     ->size() , m_ordered->size());
-      DCHECK_EQ((m_bucket_arb) ->size() , m_ordered->size());
+      DCHECK_EQ((m_bucket)     ->size() , m_map->size());
+      DCHECK_EQ((m_bucket_arb) ->size() , m_map->size());
 #ifdef __AVX2__
-DCHECK_EQ((m_bucket_avx2)->size() , m_ordered->size());
+DCHECK_EQ((m_bucket_avx2)->size() , m_map->size());
 #endif //__AVX2__
 #endif//USE_BUCKET_TABLES
    }
@@ -284,18 +347,30 @@ DCHECK_EQ((m_bucket_avx2)->size() , m_ordered->size());
       if(m_map != nullptr) {
 	 delete m_map;
 	 delete m_ordered;
+#ifdef USE_PLAIN_TABLES
 	 delete m_plain;
 	 delete m_plain_arb;
+#endif//USE_PLAIN_TABLES
+#ifdef USE_STANDARD_TABLES
+	 delete m_rigtorp;
+	 delete m_google;
+	 delete m_spp;
+	 delete m_tsl;
+#endif//USE_STANDARD_TABLES
 #ifdef __AVX2__
 delete m_avx;
 delete m_avx_arb;
 #endif //__AVX2__
+#ifdef USE_OVERFLOW_TABLES 
 	 delete m_groupO;
-	 delete m_group;
 	 delete m_compactO;
+#endif//USE_OVERFLOW_TABLES 
+	 delete m_group;
 	 delete m_compact;
 	 delete m_compact_arb;
+#ifdef USE_CHMAP_TABLE
 	 delete m_compact_chain;
+#endif//USE_CHMAP_TABLE
 #ifdef USE_BONSAI_TABLES
 	 delete m_eliasS;
 	 delete m_layeredS;
@@ -394,6 +469,7 @@ BASELINE_F(query, std, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COU
    }
 }
 
+#ifdef USE_PLAIN_TABLES
 BENCHMARK_F(query, plainI, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    const auto& plain = *(static_fixture.m_plain);
@@ -409,6 +485,8 @@ BENCHMARK_F(query, plainD, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION
       celero::DoNotOptimizeAway(plain_arb.find(el.first));
    }
 }
+#endif//USE_PLAIN_TABLES
+
 #ifdef __AVX2__
 BENCHMARK_F(query, avxI, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
@@ -426,6 +504,7 @@ BENCHMARK_F(query, avxD, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_C
 }
 #endif //__AVX2__
 
+#ifdef USE_OVERFLOW_TABLES 
 BENCHMARK_F(query, grpO, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    const auto& groupO = *(static_fixture.m_groupO);
@@ -433,6 +512,14 @@ BENCHMARK_F(query, grpO, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_C
       celero::DoNotOptimizeAway(groupO.find(el.first));
    }
 }
+BENCHMARK_F(query, chtIO, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
+{
+   const auto& compactO = *(static_fixture.m_compactO);
+   for(auto el : *static_fixture.m_map) {
+      celero::DoNotOptimizeAway(compactO.find(el.first));
+   }
+}
+#endif//USE_OVERFLOW_TABLES 
 
 BENCHMARK_F(query, grp, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
@@ -442,13 +529,6 @@ BENCHMARK_F(query, grp, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_CO
    }
 }
 
-BENCHMARK_F(query, chtIO, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
-{
-   const auto& compactO = *(static_fixture.m_compactO);
-   for(auto el : *static_fixture.m_map) {
-      celero::DoNotOptimizeAway(compactO.find(el.first));
-   }
-}
 
 BENCHMARK_F(query, chtI, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
@@ -464,6 +544,7 @@ BENCHMARK_F(query, chtD, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_C
       celero::DoNotOptimizeAway(compact.find(el.first));
    }
 }
+#ifdef USE_CHMAP_TABLE
 BENCHMARK_F(query, chmap, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    const auto& compact = *(static_fixture.m_compact_chain);
@@ -471,6 +552,9 @@ BENCHMARK_F(query, chmap, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_
       celero::DoNotOptimizeAway(compact.find(el.first));
    }
 }
+#endif//USE_CHMAP_TABLE
+
+#ifdef USE_STANDARD_TABLES
 BENCHMARK_F(query, rigtorp, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
 {
    const auto& mappe = *(static_fixture.m_rigtorp);
@@ -499,6 +583,7 @@ BENCHMARK_F(query, tsl, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_CO
       celero::DoNotOptimizeAway(mappe.find(el.first));
    }
 }
+#endif//USE_STANDARD_TABLES
 
 #ifdef USE_BONSAI_TABLES
 BENCHMARK_F(query, clearyS, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
@@ -586,18 +671,24 @@ BASELINE_F(insert, std, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_CO
       map[el.first] = el.second;
    }
 }
+#ifdef USE_PLAIN_TABLES
 BENCH_INSERT(plainI, plain_type(Fixture::KEY_WIDTH, Fixture::VALUE_WIDTH))
 BENCH_INSERT(plainD, plain_arb_type(Fixture::KEY_WIDTH, Fixture::VALUE_WIDTH))
+#endif//USE_PLAIN_TABLES
 #ifdef __AVX2__
 BENCH_INSERT(avxI, avx2_type(Fixture::KEY_WIDTH, Fixture::VALUE_WIDTH))
 BENCH_INSERT(avxD, avx2_arb_type(Fixture::KEY_WIDTH, Fixture::VALUE_WIDTH))
 #endif //__AVX2__
+#ifdef USE_OVERFLOW_TABLES
 BENCH_INSERT(grpO, groupO_type(Fixture::KEY_WIDTH, Fixture::VALUE_WIDTH))
-BENCH_INSERT(grp, group_type(Fixture::KEY_WIDTH, Fixture::VALUE_WIDTH))
 BENCH_INSERT(chtIO, compactO_type(Fixture::KEY_WIDTH, Fixture::VALUE_WIDTH))
+#endif//USE_OVERFLOW_TABLES
+BENCH_INSERT(grp, group_type(Fixture::KEY_WIDTH, Fixture::VALUE_WIDTH))
 BENCH_INSERT(chtI, compact_type(Fixture::KEY_WIDTH, Fixture::VALUE_WIDTH))
 BENCH_INSERT(chtD, compact_arb_type(Fixture::KEY_WIDTH, Fixture::VALUE_WIDTH))
+#ifdef USE_CHMAP_TABLE
 BENCH_INSERT(chmap, compact_chain_type(Fixture::KEY_WIDTH, Fixture::VALUE_WIDTH))
+#endif//USE_CHMAP_TABLE
 #ifdef USE_BONSAI_TABLES
 BENCH_INSERT(clearyP, clearyP_type(0,Fixture::KEY_WIDTH, Fixture::VALUE_WIDTH))
 BENCH_INSERT(eliasP, eliasP_type(0,Fixture::KEY_WIDTH, Fixture::VALUE_WIDTH))
@@ -613,13 +704,15 @@ BENCH_INSERT(bucket_arb, bucket_arb_type())
 BENCH_INSERT(bucket_avx2, bucket_avx2_type())
 #endif //__AVX2__
 #endif//USE_BUCKET_TABLES
+#ifdef USE_STANDARD_TABLES
 BENCH_INSERT(google, google_type())
 BENCH_INSERT(spp, spp_type())
 BENCH_INSERT(rigtorp, rigtorp_type(0, static_cast<Fixture::key_type>(-1ULL)))
 BENCH_INSERT(tsl, tsl_type())
+#endif //USE_STANDARD_TABLES
 
 
-BASELINE_F(miss, std, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
+BASELINE_F(miss, std, TableFixture, 0, CELERO_OPERATION_COUNT)
 {
    auto& map = *(static_fixture.m_ordered);
    for(auto el : static_fixture.m_missed_els) { celero::DoNotOptimizeAway(map[el]); }
@@ -627,23 +720,25 @@ BASELINE_F(miss, std, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUN
 
 
 #define BENCH_MISS(name,instance) \
-      BENCHMARK_F(miss, name, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT) { \
+      BENCHMARK_F(miss, name, TableFixture, 0 , CELERO_OPERATION_COUNT) { \
 	 auto& map = *(static_fixture.instance);\
 	 for(auto el : static_fixture.m_missed_els) { celero::DoNotOptimizeAway(map[el]); }}
 
 
-BENCH_MISS(plainI, m_plain)
-BENCH_MISS(plainD, m_plain_arb)
 #ifdef __AVX2__
 BENCH_MISS(avxI, m_avx)
 BENCH_MISS(avxD, m_avx_arb)
 #endif //__AVX2__
+#ifdef USE_OVERFLOW_TABLES 
 BENCH_MISS(grpO, m_groupO)
-BENCH_MISS(grp, m_group)
 BENCH_MISS(chtIO, m_compactO)
+#endif//USE_OVERFLOW_TABLES 
+BENCH_MISS(grp, m_group)
 BENCH_MISS(chtI, m_compact)
 BENCH_MISS(chtD, m_compact_arb)
+#ifdef USE_CHMAP_TABLE
 BENCH_MISS(chmap, m_compact_chain)
+#endif//USE_CHMAP_TABLE
 #ifdef USE_BONSAI_TABLES
 BENCH_MISS(clearyP, m_clearyP)
 BENCH_MISS(eliasP, m_eliasP)
@@ -652,10 +747,18 @@ BENCH_MISS(clearyS, m_clearyS)
 BENCH_MISS(eliasS, m_eliasS)
 BENCH_MISS(layeredS, m_layeredS)
 #endif//USE_BONSAI_TABLES
+
+#ifdef USE_PLAIN_TABLES
+BENCH_MISS(plainI, m_plain)
+BENCH_MISS(plainD, m_plain_arb)
+#endif//USE_PLAIN_TABLES
+
+#ifdef USE_STANDARD_TABLES
 BENCH_MISS(google, m_google)
 BENCH_MISS(spp, m_spp)
 BENCH_MISS(rigtorp, m_rigtorp)
 BENCH_MISS(tsl, m_tsl)
+#endif//USE_STANDARD_TABLES
 
 
 
@@ -695,18 +798,24 @@ class EraseFixture : public TableFixture {
 
    virtual void tearDown() override {
       reinsert_elements(*static_fixture.m_ordered);
+#ifdef USE_PLAIN_TABLES
       reinsert_elements(*static_fixture.m_plain);
       reinsert_elements(*static_fixture.m_plain_arb);
+#endif//USE_PLAIN_TABLES
 #ifdef __AVX2__
 reinsert_elements(*static_fixture.m_avx);
 reinsert_elements(*static_fixture.m_avx_arb);
 #endif //__AVX2__
+#ifdef USE_OVERFLOW_TABLES 
       reinsert_elements(*static_fixture.m_groupO);
-      reinsert_elements(*static_fixture.m_group);
       reinsert_elements(*static_fixture.m_compactO);
+#endif//USE_OVERFLOW_TABLES 
+      reinsert_elements(*static_fixture.m_group);
       reinsert_elements(*static_fixture.m_compact);
       reinsert_elements(*static_fixture.m_compact_arb);
+#ifdef USE_CHMAP_TABLE
       reinsert_elements(*static_fixture.m_compact_chain);
+#endif//USE_CHMAP_TABLE
 // #ifdef USE_BONSAI_TABLES
 //       reinsert_elements(*static_fixture.m_clearyP);
 //       reinsert_elements(*static_fixture.m_eliasP);
@@ -715,16 +824,18 @@ reinsert_elements(*static_fixture.m_avx_arb);
 //       reinsert_elements(*static_fixture.m_eliasS);
 //       reinsert_elements(*static_fixture.m_layeredS);
 // #endif//USE_BONSAI_TABLES
+#ifdef USE_STANDARD_TABLES
       reinsert_elements(*static_fixture.m_spp);
       reinsert_elements(*static_fixture.m_google);
       reinsert_elements(*static_fixture.m_rigtorp);
       reinsert_elements(*static_fixture.m_tsl);
+#endif//USE_STANDARD_TABLES
    }
 
 
 };
 
-BASELINE_F(erase, std, EraseFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
+BASELINE_F(erase, std, EraseFixture, 0 , CELERO_OPERATION_COUNT)
 {
    auto& map = *(static_fixture.m_ordered);
    for(auto el : this->m_delete_entries) { celero::DoNotOptimizeAway(map.erase(el.first)); }
@@ -732,23 +843,29 @@ BASELINE_F(erase, std, EraseFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COU
 
 
 #define BENCH_ERASE(name,instance) \
-      BENCHMARK_F(erase, name, EraseFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT) { \
+      BENCHMARK_F(erase, name, EraseFixture, 0, CELERO_OPERATION_COUNT) { \
 	 auto& map = *(static_fixture.instance);\
 	 for(auto el : this->m_delete_entries) { celero::DoNotOptimizeAway(map.erase(el.first)); }}
 
 
+#ifdef USE_PLAIN_TABLES
 BENCH_ERASE(plainI, m_plain)
 BENCH_ERASE(plainD, m_plain_arb)
+#endif//USE_PLAIN_TABLES
 #ifdef __AVX2__
 BENCH_ERASE(avxI, m_avx)
 BENCH_ERASE(avxD, m_avx_arb)
 #endif //__AVX2__
+#ifdef USE_OVERFLOW_TABLES 
 BENCH_ERASE(grpO, m_groupO)
-BENCH_ERASE(grp, m_group)
 BENCH_ERASE(chtIO, m_compactO)
+#endif//USE_OVERFLOW_TABLES 
+BENCH_ERASE(grp, m_group)
 BENCH_ERASE(chtI, m_compact)
 BENCH_ERASE(chtD, m_compact_arb)
+#ifdef USE_CHMAP_TABLE
 BENCH_ERASE(chmap, m_compact_chain)
+#endif//USE_CHMAP_TABLE
 // #ifdef USE_BONSAI_TABLES
 // BENCH_ERASE(clearyP, m_clearyP)
 // BENCH_ERASE(eliasP, m_eliasP)
@@ -757,8 +874,11 @@ BENCH_ERASE(chmap, m_compact_chain)
 // BENCH_ERASE(eliasS, m_eliasS)
 // BENCH_ERASE(layeredS, m_layeredS)
 // #endif//USE_BONSAI_TABLES
+
+#ifdef USE_STANDARD_TABLES
 BENCH_ERASE(google, m_google)
 BENCH_ERASE(spp, m_spp)
 BENCH_ERASE(rigtorp, m_rigtorp)
 BENCH_ERASE(tsl, m_tsl)
+#endif//USE_STANDARD_TABLES
 

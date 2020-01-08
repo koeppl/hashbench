@@ -1,13 +1,7 @@
 #pragma once
+#include "defs.hpp"
 
 
-#include <unordered_map>
-#include <rigtorp/HashMap.h>
-#include <tsl/sparse_map.h>
-#include <separate/separate_chaining_table.hpp>
-#include <separate/compact_chaining_map.hpp>
-#include <separate/group_chaining.hpp>
-#include <sparsehash/sparse_hash_map>
 
 // #include "cuckoo_dysect.h" //DySect
 // #include "utils/hash/murmur2_hash.h"
@@ -18,10 +12,25 @@ using namespace nlohmann;
 
 #include <tudocomp/util/compact_hash/map/typedefs.hpp>
 
-#include "defs.hpp"
-#include <sparsepp/spp.h>
 #include "demangled_type.hpp"
+
+
+#include <unordered_map>
+
+#ifdef USE_CHMAP_TABLE
+#include <separate/compact_chaining_map.hpp>
+#endif//USE_CHMAP_TABLE
+
+#include <separate/separate_chaining_table.hpp>
+#include <separate/group_chaining.hpp>
 #include "cht_overflow.hpp"
+
+#ifdef USE_STANDARD_TABLES
+#include <rigtorp/HashMap.h>
+#include <tsl/sparse_map.h>
+#include <sparsehash/sparse_hash_map>
+#include <sparsepp/spp.h>
+#endif//USE_STANDARD_TABLES
 
 
 template<class experiment_t>
@@ -66,10 +75,13 @@ void run_experiments(experiment_t& ex) {
         ex.execute("chtD", filter);
     });
 
-    // regist([&] {
-    //     compact_chaining_map<multiplicative_hash<>, uint8_t> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
-    //     ex.execute("chmap", filter);
-    // });
+
+#ifdef USE_CHMAP_TABLE
+    regist([&] {
+        compact_chaining_map<multiplicative_hash<>, uint8_t> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
+        ex.execute("chmap", filter);
+    });
+#endif//USE_CHMAP_TABLE
 
 #ifdef USE_OVERFLOW_TABLES
     regist([&] {

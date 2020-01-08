@@ -1,9 +1,5 @@
 #include "experiment_base.hpp"
 
-template<class T>
-T random_int(const T& maxvalue) {
-   return static_cast<T>(std::rand() * (1.0 / (RAND_MAX + 1.0 )) * maxvalue);
-}
 
 template <typename T, typename = void>
 struct has_reserve_fn
@@ -49,6 +45,7 @@ class CopyExperiment {
 	 , m_caption(caption) {
 	 const size_t maxvalue = (-1ULL)>>(64-VALUE_BITSIZE);
 	 DCHECK_LT(NUM_ELEMENTS, 1ULL<<KEY_BITSIZE);
+	 random_int_reset();
 	    for(size_t i = 0; m_map.size() < NUM_ELEMENTS; ++i) {
 	       m_map[random_int(1ULL<<KEY_BITSIZE)] = static_cast<value_type>(i % maxvalue);
 	    }

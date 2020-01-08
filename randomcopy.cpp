@@ -10,10 +10,6 @@ struct has_erase_fn<T, std::void_t<decltype(std::declval<T>().erase(std::declval
 {};
 
 
-template<class T>
-T random_int(const T& maxvalue) {
-   return static_cast<T>(std::rand() * (1.0 / (RAND_MAX + 1.0 )) * maxvalue);
-}
 
 constexpr bool exit_on_error = false;
 
@@ -51,6 +47,7 @@ class CopyExperiment {
 			  DCHECK_LT(NUM_ELEMENTS, 1ULL<<KEY_BITSIZE);
 			  m_erase_entries.reserve(m_erase_entries_size);
 
+			  random_int_reset();
 			  for(size_t i = 0; m_map.size() < NUM_ELEMENTS; ++i) {
 				  const key_type key = random_int(1ULL<<KEY_BITSIZE);
 				  const value_type value = static_cast<value_type>(i % maxvalue);
