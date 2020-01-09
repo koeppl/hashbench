@@ -175,9 +175,9 @@ bucket_avx2_type* m_bucket_avx2 = nullptr;
       m_spp = new spp_type();
       m_tsl = new tsl_type();
 #ifdef MAX_LOAD_FACTOR 
-	  m_google.max_load_factor(MAX_LOAD_FACTOR);
-	  m_spp.max_load_factor(MAX_LOAD_FACTOR);
-	  m_tsl.max_load_factor(MAX_LOAD_FACTOR);
+	  m_google->max_load_factor(MAX_LOAD_FACTOR);
+	  m_spp->max_load_factor(MAX_LOAD_FACTOR);
+	  m_tsl->max_load_factor(MAX_LOAD_FACTOR);
 #endif//MAX_LOAD_FACTOR
 #endif//USE_STANDARD_TABLES
 
@@ -189,10 +189,10 @@ bucket_avx2_type* m_bucket_avx2 = nullptr;
       m_layeredP = new layeredP_type(0,KEY_WIDTH, VALUE_WIDTH);
       m_clearyP = new clearyP_type(0,KEY_WIDTH, VALUE_WIDTH);
 #ifdef MAX_LOAD_FACTOR 
-	  m_layeredS.max_load_factor(MAX_LOAD_FACTOR);
-	  m_clearyS.max_load_factor(MAX_LOAD_FACTOR);
-	  m_layeredP.max_load_factor(MAX_LOAD_FACTOR);
-	  m_clearyP.max_load_factor(MAX_LOAD_FACTOR);
+	  m_layeredS->max_load_factor(MAX_LOAD_FACTOR);
+	  m_clearyS->max_load_factor(MAX_LOAD_FACTOR);
+	  m_layeredP->max_load_factor(MAX_LOAD_FACTOR);
+	  m_clearyP->max_load_factor(MAX_LOAD_FACTOR);
 #endif//MAX_LOAD_FACTOR
 #endif//USE_BONSAI_TABLES
 
