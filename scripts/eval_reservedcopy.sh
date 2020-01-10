@@ -5,7 +5,7 @@ set -e
 set -o pipefail
 
 size=33554432
-value_widths=(1 2 4 8)
+value_widths=(1 8)
 jsonfile=$(mktemp)
 
 while [[ $size -le 268435456 ]]; do
@@ -17,7 +17,7 @@ while [[ $size -le 268435456 ]]; do
 			while read -r line; do
 				echo "$line size=$size"
 			done
-		((size=size*3/2))
 	done
+	((size=size*3/2))
 done
 rm $jsonfile
