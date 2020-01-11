@@ -724,7 +724,7 @@ BENCH_INSERT(tsl, tsl_type())
 #endif //USE_STANDARD_TABLES
 
 
-BASELINE_F(miss, std, TableFixture, 0, CELERO_OPERATION_COUNT)
+BASELINE_F(miss, std, TableFixture, 100, CELERO_OPERATION_COUNT)
 {
    auto& map = *(static_fixture.m_ordered);
    for(auto el : static_fixture.m_missed_els) { celero::DoNotOptimizeAway(map[el]); }
@@ -732,7 +732,7 @@ BASELINE_F(miss, std, TableFixture, 0, CELERO_OPERATION_COUNT)
 
 
 #define BENCH_MISS(name,instance) \
-      BENCHMARK_F(miss, name, TableFixture, 0 , CELERO_OPERATION_COUNT) { \
+      BENCHMARK_F(miss, name, TableFixture, 100 , CELERO_OPERATION_COUNT) { \
 	 auto& map = *(static_fixture.instance);\
 	 for(auto el : static_fixture.m_missed_els) { celero::DoNotOptimizeAway(map[el]); }}
 
@@ -848,7 +848,7 @@ reinsert_elements(*static_fixture.m_avx_arb);
 
 };
 
-BASELINE_F(erase, std, EraseFixture, 0 , CELERO_OPERATION_COUNT)
+BASELINE_F(erase, std, EraseFixture, 100 , CELERO_OPERATION_COUNT)
 {
    auto& map = *(static_fixture.m_ordered);
    for(auto el : this->m_delete_entries) { celero::DoNotOptimizeAway(map.erase(el.first)); }
@@ -856,7 +856,7 @@ BASELINE_F(erase, std, EraseFixture, 0 , CELERO_OPERATION_COUNT)
 
 
 #define BENCH_ERASE(name,instance) \
-      BENCHMARK_F(erase, name, EraseFixture, 0, CELERO_OPERATION_COUNT) { \
+      BENCHMARK_F(erase, name, EraseFixture, 100, CELERO_OPERATION_COUNT) { \
 	 auto& map = *(static_fixture.instance);\
 	 for(auto el : this->m_delete_entries) { celero::DoNotOptimizeAway(map.erase(el.first)); }}
 
