@@ -148,7 +148,7 @@ void run_experiments(experiment_t& ex) {
 
 #ifdef USE_BONSAI_TABLES
     regist([&] {
-        using filter_t = tdc::compact_hash::map::sparse_elias_hashmap_t<value_type>;
+        using filter_t = tdc::compact_hash::map::sparse_elias_hashmap_t<tdc::dynamic_t>;
         typename filter_t::config_args config;
         // config.size_manager_config.load_factor = ;
         // config.storage_config = ;
@@ -161,7 +161,7 @@ void run_experiments(experiment_t& ex) {
         ex.execute("eliasS", filter);
     });
     regist([&] {
-        using filter_t = tdc::compact_hash::map::sparse_cv_hashmap_t<value_type>;
+        using filter_t = tdc::compact_hash::map::sparse_cv_hashmap_t<tdc::dynamic_t>;
         typename filter_t::config_args config;
         // config.size_manager_config.load_factor = ;
 
@@ -172,7 +172,7 @@ void run_experiments(experiment_t& ex) {
         ex.execute("clearyS", filter);
     });
     regist([&] {
-        using filter_t = tdc::compact_hash::map::sparse_layered_hashmap_t<value_type>;
+        using filter_t = tdc::compact_hash::map::sparse_layered_hashmap_t<tdc::dynamic_t>;
         typename filter_t::config_args config;
         // config.size_manager_config.load_factor = ;
         // config.displacement_config.table_config.bit_width_config.width = ;
@@ -184,7 +184,7 @@ void run_experiments(experiment_t& ex) {
         ex.execute("layeredS", filter);
     });
     regist([&] {
-        using filter_t = tdc::compact_hash::map::plain_elias_hashmap_t<value_type>;
+        using filter_t = tdc::compact_hash::map::plain_elias_hashmap_t<tdc::dynamic_t>;
         typename filter_t::config_args config;
         // config.size_manager_config.load_factor = ;
         // config.storage_config.empty_value = ;
@@ -197,7 +197,7 @@ void run_experiments(experiment_t& ex) {
         ex.execute("eliasP", filter);
     });
     regist([&] {
-        using filter_t = tdc::compact_hash::map::plain_cv_hashmap_t<value_type>;
+        using filter_t = tdc::compact_hash::map::plain_cv_hashmap_t<tdc::dynamic_t>;
         typename filter_t::config_args config;
         // config.size_manager_config.load_factor = ;
         // config.storage_config.empty_value = ;
@@ -209,7 +209,7 @@ void run_experiments(experiment_t& ex) {
         ex.execute("clearyP", filter);
     });
     regist([&] {
-        using filter_t = tdc::compact_hash::map::plain_layered_hashmap_t<value_type>;
+        using filter_t = tdc::compact_hash::map::plain_layered_hashmap_t<tdc::dynamic_t>;
         typename filter_t::config_args config;
         // config.size_manager_config.load_factor = ;
         // config.storage_config.empty_value = ;
