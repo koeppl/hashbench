@@ -4,11 +4,11 @@
 set -e
 set -o pipefail
 
-size=2048
+size=32768
 value_widths=(1 8)
 jsonfile=$(mktemp)
 
-while [[ $size -le 536870912 ]]; do
+while [[ $size -le 392705131 ]]; do
 	for value_width in ${value_widths[@]}; do
 		set -x
 		../build/randomcopy "$size" "$value_width" > "$jsonfile"

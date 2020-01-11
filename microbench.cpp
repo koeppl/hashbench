@@ -446,7 +446,7 @@ class TableFixture : public celero::TestFixture {
    TableFixture()
       : m_problemspace(m_instance_length,0)
    {
-      size_t value = 1024*2;
+      size_t value = 32768;
       for(size_t i = 0; i < m_instance_length; ++i) {
 	 m_problemspace[i] = value;
 	 value = (value*3)/2;
