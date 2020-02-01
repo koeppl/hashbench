@@ -61,6 +61,11 @@ void run_experiments(experiment_t& ex) {
 	// 		dysect::cuckoo_dysect<key_type, value_type, dysect::hash::murmur2_hash> filter(10000, 1.1);
     //     ex.execute("dysect", filter);
     // });
+	
+    regist([&] {
+        separate_chaining_map<plain_bucket<key_type>, value_bucket_type, hash_mapping_adapter<key_type , SplitMix >> filter;
+        ex.execute("plainI", filter);
+    });
 
     regist([&] {
             group::group_chaining_table<multiplicative_hash<>> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
