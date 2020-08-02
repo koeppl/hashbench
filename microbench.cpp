@@ -29,6 +29,7 @@
 #ifdef USE_STANDARD_TABLES
 #include <rigtorp/HashMap.h>
 #include <tsl/sparse_map.h>
+#include <patchmap.hpp>
 #include <sparsehash/sparse_hash_map>
 #include <sparsepp/spp.h>
 #endif//USE_STANDARD_TABLES
@@ -52,6 +53,9 @@ class Fixture {
    using google_type = google::sparse_hash_map<key_type,value_type, SplitMix>;
    using spp_type = spp::sparse_hash_map<key_type,value_type, SplitMix>;
    using tsl_type = tsl::sparse_map<key_type,value_type, SplitMix>;
+   using patchmap_type = whash::patchmap<key_type,value_type, SplitMix>; // to make it fair
+   // if you want to allow the patchmap to take advantage of bijectivity, however
+   // using patchmap_type = whash::patchmap<key_type,value_type>;
 #endif//USE_STANDARD_TABLES
 
    using unordered_type = std::unordered_map<key_type                      , value_type   , SplitMix>;
@@ -120,6 +124,7 @@ avx2_arb_type* m_avx_arb = nullptr;
    google_type* m_google = nullptr;
    spp_type* m_spp = nullptr;
    tsl_type* m_tsl = nullptr;
+   patchmap_type* m_patchmap = nullptr;
 #endif//USE_STANDARD_TABLES
 
 #ifdef USE_BONSAI_TABLES
@@ -174,10 +179,12 @@ bucket_avx2_type* m_bucket_avx2 = nullptr;
       m_google = new google_type();
       m_spp = new spp_type();
       m_tsl = new tsl_type();
+      m_patchmap = new patchmap_type();
 #ifdef MAX_LOAD_FACTOR 
 	  m_google->max_load_factor(MAX_LOAD_FACTOR);
 	  m_spp->max_load_factor(MAX_LOAD_FACTOR);
 	  m_tsl->max_load_factor(MAX_LOAD_FACTOR);
+//  patchmap does not support setting max load factor at runtime
 #endif//MAX_LOAD_FACTOR
 #endif//USE_STANDARD_TABLES
 
@@ -246,6 +253,7 @@ m_bucket_avx2 = new bucket_avx2_type(KEY_WIDTH);
 	 (*m_spp)[el.first] = el.second;
 	 (*m_rigtorp)[el.first] = el.second;
 	 (*m_tsl)[el.first] = el.second;
+	 (*m_patchmap)[el.first] = el.second;
 #endif//USE_STANDARD_TABLES
 
 #ifdef USE_BONSAI_TABLES
@@ -291,6 +299,7 @@ DCHECK_EQ((*m_avx_arb)[el.first], el.second);
 	 DCHECK_EQ((*m_spp)[el.first], el.second);
 	 DCHECK_EQ((*m_rigtorp)[el.first], el.second);
 	 DCHECK_EQ((*m_tsl)[el.first], el.second);
+	 DCHECK_EQ((*m_patchmap)[el.first], el.second);
 #endif//USE_STANDARD_TABLES
 
 #ifdef USE_BONSAI_TABLES
@@ -337,6 +346,7 @@ DCHECK_EQ(m_avx_arb->size(), m_map->size());
       DCHECK_EQ(m_spp->size(), m_map->size());
       DCHECK_EQ(m_rigtorp->size(), m_map->size());
       DCHECK_EQ(m_tsl->size(), m_map->size());
+      DCHECK_EQ(m_patchmap->size(), m_map->size());
 #endif//USE_STANDARD_TABLES
 
 #ifdef USE_BONSAI_TABLES
@@ -368,6 +378,7 @@ DCHECK_EQ((m_bucket_avx2)->size() , m_map->size());
 	 delete m_google;
 	 delete m_spp;
 	 delete m_tsl;
+	 delete m_patchmap;
 #endif//USE_STANDARD_TABLES
 #ifdef __AVX2__
 delete m_avx;
@@ -595,6 +606,13 @@ BENCHMARK_F(query, tsl, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_CO
       celero::DoNotOptimizeAway(mappe.find(el.first));
    }
 }
+BENCHMARK_F(query, patchmap, TableFixture, CELERO_SAMPLING_COUNT, CELERO_OPERATION_COUNT)
+{
+   const auto& mappe = *(static_fixture.m_patchmap);
+   for(auto el : *static_fixture.m_map) {
+      celero::DoNotOptimizeAway(mappe.find(el.first));
+   }
+}
 #endif//USE_STANDARD_TABLES
 
 #ifdef USE_BONSAI_TABLES
@@ -721,6 +739,7 @@ BENCH_INSERT(google, google_type())
 BENCH_INSERT(spp, spp_type())
 BENCH_INSERT(rigtorp, rigtorp_type(0, static_cast<Fixture::key_type>(-1ULL)))
 BENCH_INSERT(tsl, tsl_type())
+BENCH_INSERT(patchmap, patchmap_type())
 #endif //USE_STANDARD_TABLES
 
 
@@ -770,6 +789,7 @@ BENCH_MISS(google, m_google)
 BENCH_MISS(spp, m_spp)
 BENCH_MISS(rigtorp, m_rigtorp)
 BENCH_MISS(tsl, m_tsl)
+BENCH_MISS(patchmap, m_patchmap)
 #endif//USE_STANDARD_TABLES
 
 
@@ -842,6 +862,7 @@ reinsert_elements(*static_fixture.m_avx_arb);
       reinsert_elements(*static_fixture.m_google);
       reinsert_elements(*static_fixture.m_rigtorp);
       reinsert_elements(*static_fixture.m_tsl);
+      reinsert_elements(*static_fixture.m_patchmap);
 #endif//USE_STANDARD_TABLES
    }
 
@@ -893,5 +914,6 @@ BENCH_ERASE(google, m_google)
 BENCH_ERASE(spp, m_spp)
 BENCH_ERASE(rigtorp, m_rigtorp)
 BENCH_ERASE(tsl, m_tsl)
+BENCH_ERASE(patchmap, m_patchmap)
 #endif//USE_STANDARD_TABLES
 

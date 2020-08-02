@@ -28,3 +28,6 @@
 [submodule "external/broadwordsearch"]
 	path = external/broadwordsearch
 	url = https://github.com/koeppl/broadwordsearch
+[submodule "external/patchmap"]
+	path = external/patchmap
+	url = https://github.com/1ykos/patchmap
