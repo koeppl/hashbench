@@ -32,6 +32,8 @@ using namespace nlohmann;
 #include <sparsepp/spp.h>
 #endif//USE_STANDARD_TABLES
 
+#include <emhash/hash_table6.hpp>
+
 
 template<class experiment_t>
 void run_experiments(experiment_t& ex) {
@@ -258,6 +260,13 @@ void run_experiments(experiment_t& ex) {
 #endif
         ex.execute("spp", filter);
     });
+
+    regist([&] {
+		emhash6::HashMap<key_type,value_type,SplitMix> filter;
+		ex.execute("emhash6", filter);
+    });
+
+
 #endif //USE_STANDARD_TABLES
 
     // TODO: make algorithmens selectable per CLI flag
