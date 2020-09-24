@@ -8,7 +8,7 @@ size=32768
 value_widths=(1 8)
 jsonfile=$(mktemp)
 
-while [[ $size -le 392705131 ]]; do
+while [[ $size -le 169869312 ]]; do
 	for value_width in ${value_widths[@]}; do
 		set -x
 		../build/randomcopy "$size" "$value_width" > "$jsonfile"
