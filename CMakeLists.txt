@@ -103,6 +103,10 @@ target_link_libraries(fingerprint tudocomp_stat glog)
 
 add_executable  (linear_scaling linear_scaling.cpp)
 target_link_libraries(linear_scaling tudocomp_stat glog)
+else()
+target_link_libraries(randomcopy glog)
+target_link_libraries(reservecopy  glog)
+target_link_libraries(fingerprint  glog)
 endif(NOT STATS_DISABLED)
 
 
