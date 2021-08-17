@@ -32,6 +32,8 @@ using namespace nlohmann;
 #include <sparsepp/spp.h>
 #endif//USE_STANDARD_TABLES
 
+#include <emhash/hash_table6.hpp>
+
 
 template<class experiment_t>
 void run_experiments(experiment_t& ex) {
@@ -61,6 +63,11 @@ void run_experiments(experiment_t& ex) {
 	// 		dysect::cuckoo_dysect<key_type, value_type, dysect::hash::murmur2_hash> filter(10000, 1.1);
     //     ex.execute("dysect", filter);
     // });
+	
+    regist([&] {
+        separate_chaining_map<plain_bucket<key_type>, value_bucket_type, hash_mapping_adapter<key_type , SplitMix >> filter;
+        ex.execute("plainI", filter);
+    });
 
     regist([&] {
             group::group_chaining_table<multiplicative_hash<>> filter(ex.KEY_BITSIZE, ex.VALUE_BITSIZE);
@@ -253,6 +260,13 @@ void run_experiments(experiment_t& ex) {
 #endif
         ex.execute("spp", filter);
     });
+
+    regist([&] {
+		emhash6::HashMap<key_type,value_type,SplitMix> filter;
+		ex.execute("emhash6", filter);
+    });
+
+
 #endif //USE_STANDARD_TABLES
 
     // TODO: make algorithmens selectable per CLI flag

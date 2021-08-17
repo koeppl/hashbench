@@ -28,7 +28,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 -ggdb -DDEBUG") #-D_G
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mtune=native -march=native -DNDEBUG")
 
 
-include_directories(include)
+include_directories(external)
 include_directories(external/bit_span/include)
 include_directories(external/compact_sparse_hash/include)
 include_directories(external/tudostats/include)
@@ -39,6 +39,7 @@ include_directories(external/separate_chaining/include)
 include_directories(external/smhasher/src)
 include_directories(external/sparsepp)
 include_directories(external/broadwordsearch/include)
+include_directories(external/patchmap)
 # include_directories(external/DySECT/include)
 # include_directories(external/DySECT)
 

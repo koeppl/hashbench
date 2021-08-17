@@ -27,7 +27,7 @@ namespace separate_chaining {
         // }
 
         void initialize(size_t elements, const uint_fast8_t key_width, const uint_fast8_t value_width) {
-           const size_t reserve = std::max<size_t>(1ULL, std::ceil(elements/m_map.max_load_factor()));
+           const size_t reserve = std::max<size_t>(2ULL, std::ceil(elements/m_map.max_load_factor()));
            uint_fast8_t reserve_bits = most_significant_bit(reserve);
            if(1ULL<<reserve_bits != reserve) ++reserve_bits;
            elements = 1ULL<<reserve_bits;
@@ -127,8 +127,8 @@ namespace separate_chaining {
             return position;
         }
         void resize_buckets(size_t bucketcount, uint_fast8_t key_width, uint_fast8_t value_width) {
-          initialize(static_cast<size_t>(bucketcount * CHT_OVERFLOW_FRACTION), key_width, value_width);
-          DCHECK_GE(m_map.table_size(), bucketcount); // sets the max. number of elements to the number of buckets in the hash table
+          initialize(static_cast<size_t>(std::ceil(bucketcount * CHT_OVERFLOW_FRACTION)), key_width, value_width);
+          DCHECK_GE(m_map.table_size(), std::ceil(bucketcount*CHT_OVERFLOW_FRACTION)); // sets the max. number of elements to the number of buckets in the hash table
           m_bucketfull.resize(bucketcount);
         }
         
