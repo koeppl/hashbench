@@ -33,10 +33,10 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mtune=native -march=nat
 
 FIND_LIBRARY(GLOG_LIBRARY glog)
 FIND_PATH(GLOG_INCLUDE_DIR "glog/logging.h")
-if(NOT GLOG_FOUND)
+if(NOT Glog_FOUND)
     add_subdirectory(external/glog)
     include_directories(external/glog/)
-endif(NOT GLOG_FOUND)
+endif(NOT Glog_FOUND)
 
 
 include_directories(external)
