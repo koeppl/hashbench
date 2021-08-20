@@ -27,6 +27,17 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -march=native -fdiagnost
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 -ggdb -DDEBUG") #-D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mtune=native -march=native -DNDEBUG")
 
+##########
+# glog
+##########
+
+FIND_LIBRARY(GLOG_LIBRARY glog)
+FIND_PATH(GLOG_INCLUDE_DIR "glog/logging.h")
+if(NOT GTEST_FOUND)
+    add_subdirectory(external/glog)
+    include_directories(external/glog/)
+endif(NOT GTEST_FOUND)
+
 
 include_directories(external)
 include_directories(external/bit_span/include)
@@ -117,6 +128,10 @@ endif(NOT STATS_DISABLED)
 
 FIND_LIBRARY(GLOG_LIBRARY glog)
 FIND_PATH(GLOG_INCLUDE_DIR "glog/logging.h")
+
+add_subdirectory(external/glog)
+
+
 
 find_package(GTest)
 include_directories(${GTEST_INCLUDE_DIR})

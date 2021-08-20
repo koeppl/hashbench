@@ -34,3 +34,6 @@
 [submodule "external/emhash"]
 	path = external/emhash
 	url = https://github.com/ktprime/emhash
+[submodule "external/glog"]
+	path = external/glog
+	url = https://github.com/google/glog
