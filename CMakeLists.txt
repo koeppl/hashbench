@@ -126,12 +126,6 @@ endif(NOT STATS_DISABLED)
 # TESTS
 ##########
 
-FIND_LIBRARY(GLOG_LIBRARY glog)
-FIND_PATH(GLOG_INCLUDE_DIR "glog/logging.h")
-
-add_subdirectory(external/glog)
-
-
 
 find_package(GTest)
 if(GTEST_FOUND)
