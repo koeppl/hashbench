@@ -134,14 +134,16 @@ add_subdirectory(external/glog)
 
 
 find_package(GTest)
+if(GTEST_FOUND)
 include_directories(${GTEST_INCLUDE_DIR})
-
 add_executable  (test_overflow test_overflow.cpp)
 
 target_link_libraries(test_overflow gtest pthread  tudocomp_stat ${GLOG_LIBRARY})
 
 enable_testing()
 add_test(NAME overflow COMMAND test_overflow)
+endif(GTEST_FOUND)
+
 
 
 MESSAGE( STATUS "With Gtest?: " ${GTEST_INCLUDE_DIR} )
