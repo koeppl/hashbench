@@ -31,8 +31,9 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mtune=native -march=nat
 # glog
 ##########
 
-FIND_LIBRARY(GLOG_LIBRARY glog)
-FIND_PATH(GLOG_INCLUDE_DIR "glog/logging.h")
+# seems that it also finds not-installed 'glog's
+# FIND_LIBRARY(GLOG_LIBRARY glog)
+# FIND_PATH(GLOG_INCLUDE_DIR "glog/logging.h")
 if(NOT Glog_FOUND)
     add_subdirectory(external/glog)
     include_directories(external/glog/)
